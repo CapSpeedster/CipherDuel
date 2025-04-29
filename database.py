@@ -9,7 +9,7 @@ def db_connect():
     __db=sqlite3.connect("user.db")
 
     __db.cursor().execute("""CREATE TABLE IF NOT EXISTS accounts (id INTEGER PRIMARY KEY, username TEXT NOT NULL, password TEXT NOT NULL, salt TEXT)""")
-    __db.cursor().execute("""CREATE TABLE IF NOT EXISTS profiles (userid INTEGER PRIMARY KEY NOT NULL, wins INTEGER DEFAULT 0, losses INTEGER DEFAULT 0, times INTEGER[], solvedCodes INTEGER[], avatar TEXT)""")
+    __db.cursor().execute("""CREATE TABLE IF NOT EXISTS profiles (userid INTEGER PRIMARY KEY NOT NULL, wins INTEGER DEFAULT 0, losses INTEGER DEFAULT 0, times JSON, solvedCodes JSON, avatar TEXT)""")
     __db.cursor().execute("""CREATE TABLE IF NOT EXISTS ciphers (id INTEGER PRIMARY KEY, plaintext TEXT, keyword TEXT, cipherType TEXT)""")
 
     __db.commit()

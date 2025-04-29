@@ -123,11 +123,16 @@ def connect_routes(blueprint):
                 return redirect('/profile')
             else: 
                 #check if current user is the same as the profile page's user
+                bestTime=profile['times']
+                if bestTime != None:
+                    for i in profile:
+                        if bestTime>i:
+                            bestTime=i
                 currentUser = json.loads(R_Server.get(userID))['username']
                 readonly = True
                 if json.loads(R_Server.get(userID))==profile:
                     readonly = False
-                return render_template('profile.j2', profile=profile, username=user, readonly=readonly, cUser=currentUser)
+                return render_template('profile.j2', profile=profile, username=user, readonly=readonly, cUser=currentUser, bestTime=bestTime)
 
     @blueprint.route("/profile/<user>", methods = ['POST'])
     def changeProfile(user):
@@ -143,13 +148,6 @@ def connect_routes(blueprint):
         else:
             mode = request.form.get('mode')
             profile=dict()
-            if mode == 'name':
-                fname = request.form.get('fname')
-                lname = request.form.get('lname')
-                if fname == None or lname == None:
-                    return 'ERROR: Incomplete Data'
-                else:
-                    profile = database.update_profile(user, fname, lname)
             if mode == 'avatar':
                 avatar = request.files['avatar']
                 if avatar == None:
@@ -203,51 +201,4 @@ def connect_routes(blueprint):
             resp = make_response(jsonify({'status' : 'success', 'data' : f'{user} has been deleted'}))
             resp.set_cookie('userid', '', expires=0)
             return resp
-    
-    @blueprint.route('/profile/<user>', methods = ['PUT'])
-    def putProfile(user):
-        """
-        Updates profile page and database based on fetch avtion:
-        name: updates fname and lname
-        picture: updates avatar if it's .jpeg or .png
-        password: confirms current passwords and updates with new password
-        """
-        userID = request.cookies.get('userid')
-        if userID == None:
-            return jsonify({'status' : 'error', 'data' : 'user not logged in'})
-        else: 
-            body = request.get_json()
-            if 'action' not in body or 'data' not in body:
-                return jsonify({'status' : "error", 'data' : 'incomplete data'})
-            action = body.get('action')
-            data = body.get('data')
-
-            if action == 'name':
-                fname = data['fname']
-                lname = data['lname']
-                profile = database.update_profile(user, fname = fname, lname = lname)
-                R_Server.set(userID, json.dumps(profile))
-            if action == 'password':
-                newpword = data['newpword']
-                pconfirm = data['pconfirm']
-
-                #Authenticate username and password and updates database with new password
-                if database.db_auth_user(user, pconfirm):
-                    profile=database.update_profile(user, password=newpword)
-                else: 
-                    return jsonify({'status' : 'error', 'data' : 'incorrect username or password'})
-                R_Server.set(userID, json.dumps(profile))
-            if action == 'picture':
-                avatar = data['avatar']
-
-                #adds uploaded file to the avatars folder and updates the name
-                if Path(avatar.filename).suffix == '.jpeg' or Path(avatar.filename).suffix == '.png':
-                    avatar.save(os.path.join('static/avatars', avatar.filename))
-                    os.rename(f'static/avatars/{avatar.filename}', f'static/avatars/{user}_avatar.{Path(avatar.filename).suffix}')
-                    profile = database.update_profile(user, avatar=avatar.filename)
-                    R_Server.set(userID, json.dumps(profile))
-                else:
-                    return jsonify({'status' : 'error', 'data' : 'incorrect file format'})
-
-
-            return jsonify({'status' : 'success', 'data' : f"updated {user}'s profile page"})
+        

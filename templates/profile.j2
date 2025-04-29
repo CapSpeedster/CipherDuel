@@ -15,17 +15,13 @@
         </script>
     </head>
     <body>
-        <div>Played Games: </div>
+        <div id="title"><img id="avatar" src="/static/avatars/{{profile['avatar']}}">{{profile['username']}}'s Profile</div>
+        <div id="stats">Wins: {{profile['wins']}}   Losses: {{profile['losses']}}</div> 
+        <div id="stats">Best Solve Time: {{bestTime}} seconds</div>
         {% if readonly == True %}
-            <div>First Name: {{profile['fname']}}   Last Name: {{profile['lname']}}</div>
             <div>Currently Logged In Account: {{cUser}}</div>
         {% else %}
             <div>
-                <form method="POST" action="/profile/{{profile['username']}}">
-                    First Name: <input name="fname" value="{{profile['fname']}}"/>
-                    Last Name: <input name="lname" value="{{profile['lname']}}"/>
-                    <button name="mode" type="submit" value="name">Update Name</button>
-                </form>
                 <form method="POST" action="/profile/{{profile['username']}}">
                     Confirm Password: <input name = "pconfirm"/>
                     New Password: <input name="newpword"/>
@@ -50,6 +46,5 @@
                 <button onclick="onDelButtonPress(); location.href = '/profile/{{profile['username']}}'">Delete Account</button>
                 </div>
         {% endif %}
-        <div><img src="/static/avatars/{{profile['avatar']}}"></div>
     </body>
 </html>
