@@ -93,21 +93,23 @@ def get_profile(user:str) -> dict:
             idValue = int(x)
 
         #Get user profile data
-        response = __db.cursor().execute("""SELECT wins, losses, avatar FROM profiles WHERE userid = ?""", (idValue,))
+        response = __db.cursor().execute("""SELECT wins, losses, times, solvedCodes, avatar FROM profiles WHERE userid = ?""", (idValue,))
         profileDict = dict({
             'username' : user
         })
         for x in response:
-            profileDict['fname'] = x[0]
-            profileDict['lname'] = x[1]
-            profileDict['avatar'] = x[2]
+            profileDict['wins'] = x[0]
+            profileDict['losses'] = x[1]
+            profileDict['times'] = x[2]
+            profileDict['solvedCodes'] = x[3]
+            profileDict['avatar'] = x[4]
 
         return profileDict
     else:
         return False
 
 #Updates and returns new user profile
-def update_profile(user:str, fname:str=None, lname:str=None, avatar:str=None, password:str = None) -> dict:
+def update_profile(user:str, wins:int=None, losses:int=None, times:list=None, solvedCodes:list=None, avatar:str=None, password:str = None) -> dict:
     __db = sqlite3.connect("user.db")
 
     response = __db.cursor().execute("""SELECT id FROM accounts WHERE username = ?""", (user,)).fetchone()
@@ -116,12 +118,16 @@ def update_profile(user:str, fname:str=None, lname:str=None, avatar:str=None, pa
         idValue=int(x)
     
     #update database
-    if fname != None:
-        __db.cursor().execute("""UPDATE profiles SET fname = ? WHERE userid = ?""", (fname, idValue))
-    if lname != None:
-        __db.cursor().execute("""UPDATE profiles SET lname = ? WHERE userid = ?""", (lname, idValue))
+    if wins != None:
+        __db.cursor().execute("""UPDATE profiles SET wins = ? WHERE userid = ?""", (wins, idValue))
+    if losses != None:
+        __db.cursor().execute("""UPDATE profiles SET losses = ? WHERE userid = ?""", (losses, idValue))
     if avatar != None:
         __db.cursor().execute("""UPDATE profiles SET avatar = ? WHERE userid = ?""", (avatar, idValue))
+    if times != None:
+        __db.cursor().execute("""UPDATE profiles SET times = ? WHERE userid = ?""", (times, idValue))
+    if solvedCodes != None:
+        __db.cursor().execute("""UPDATE profiles SET solvedCodes = ? WHERE userid = ?""", (solvedCodes, idValue))
     if password != None:
         #encrypt password
         response = __db.cursor().execute("""SELECT salt FROM accounts WHERE username = ?""", (user,)).fetchone()
@@ -135,14 +141,16 @@ def update_profile(user:str, fname:str=None, lname:str=None, avatar:str=None, pa
     __db.commit()
 
     #get user profile
-    response = __db.cursor().execute("""SELECT fname, lname, avatar FROM profiles WHERE userid = ?""", (idValue,))
+    response = __db.cursor().execute("""SELECT wins, losses, times, solvedCodes, avatar FROM profiles WHERE userid = ?""", (idValue,))
     profileDict = dict({
         'username' : user
     })
     for x in response:
-        profileDict['fname'] = x[0]
-        profileDict['lname'] = x[1]
-        profileDict['avatar'] = x[2]
+        profileDict['wins'] = x[0]
+        profileDict['losses'] = x[1]
+        profileDict['times'] = x[2]
+        profileDict['solvedCodes'] = x[3]
+        profileDict['avatar'] = x[4]
     return profileDict
 
 #returns list of all account usernames in database

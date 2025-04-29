@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="stylesheet" type="text/css" href="/static/style.css"/>
+        <script>
+            //Sends button press as a DELETE request
+            async function onDelButtonPress(){
+                let response = await fetch('', {
+                    method : 'DELETE',
+                    headers: {
+                        'Content-Type' : 'application/json'
+                    }
+                })
+            }
+        </script>
+    </head>
+    <body>
+        <div>Played Games: </div>
+        {% if readonly == True %}
+            <div>First Name: {{profile['fname']}}   Last Name: {{profile['lname']}}</div>
+            <div>Currently Logged In Account: {{cUser}}</div>
+        {% else %}
+            <div>
+                <form method="POST" action="/profile/{{profile['username']}}">
+                    First Name: <input name="fname" value="{{profile['fname']}}"/>
+                    Last Name: <input name="lname" value="{{profile['lname']}}"/>
+                    <button name="mode" type="submit" value="name">Update Name</button>
+                </form>
+                <form method="POST" action="/profile/{{profile['username']}}">
+                    Confirm Password: <input name = "pconfirm"/>
+                    New Password: <input name="newpword"/>
+                    <button name="mode" type="submit" value="pword">Update Password</button>
+                </form>
+            </div>
+            {% with errors = get_flashed_messages(category_filter=["error"]) %}
+                {% if errors %}
+                    {% for msg in errors%}
+                        {{msg}}
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        {% endif %}
+        {% if readonly == False%}
+            <form enctype="multipart/form-data" action="/profile/{{profile['username']}}" method="POST">
+                <input name="avatar" type="file" value="Change Avatar"/>
+                <button name="mode" value="avatar">Change My Avatar</button>
+            </form>
+            <div>
+                <button onclick="location.href='/logout'">Log Out</button>
+                <button onclick="onDelButtonPress(); location.href = '/profile/{{profile['username']}}'">Delete Account</button>
+                </div>
+        {% endif %}
+        <div><img src="/static/avatars/{{profile['avatar']}}"></div>
+    </body>
+</html>
