@@ -5,6 +5,9 @@ import uuid
 import json
 import os
 from pathlib import Path
+import csv
+import random
+import patristo
 
 # Connect to Redis
 R_Server = redis.StrictRedis()
@@ -156,6 +159,8 @@ def connect_routes(blueprint):
                     if Path(avatar.filename).suffix == '.jpeg' or Path(avatar.filename).suffix == '.png':
                         #adds uploaded file to the avatars folder and updates the name
                         avatar.save(os.path.join('static/avatars', avatar.filename))
+                        if os.path.isfile(f'static/avatars/{user}_avatar{Path(avatar.filename).suffix}'):
+                            os.remove(f'static/avatars/{user}_avatar{Path(avatar.filename).suffix}')
                         os.rename(f'static/avatars/{avatar.filename}', f'static/avatars/{user}_avatar{Path(avatar.filename).suffix}')
                         profile = database.update_profile(user, avatar=f'{user}_avatar{Path(avatar.filename).suffix}')
                     else:
@@ -208,6 +213,29 @@ def connect_routes(blueprint):
         if userID == None:
             return redirect('/login')
         else:
-            letters = list(json.loads(R_Server.get(userID))['username'])
+            with open('static/ciphers.csv', mode='r') as file:
+                csv_reader = csv.DictReader(file)
+                ciphers = []
+                for i in csv_reader:
+                    ciphers.append(i)
+            
+            patCiphers = []
+            for i in range(len(ciphers)):
+                if ciphers[i]['cipherType']=='patristocrat':
+                    patCiphers.append(ciphers[i])
+
+            solvedCodes = json.loads(json.loads(R_Server.get(userID))['solvedCodes'])
+            
+            newCiphers = []
+            for i in patCiphers:
+                if i['plaintext'] not in solvedCodes:
+                    newCiphers.append(i)
+            
+            randint = random.randint(0, len(newCiphers)-1)
+            plaintext = newCiphers[randint]['plaintext']
+            keyword = newCiphers[randint]['keyword']
+            shift = random.randint(0, 25)
+            letters = list(patristo.patristok1(plaintext, keyword, shift))
+
             return render_template('cipherpage.j2', letters=letters, profile=json.loads(R_Server.get(userID)))
         

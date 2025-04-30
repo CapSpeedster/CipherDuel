@@ -1,6 +1,7 @@
 import sqlite3
 import hashlib
 import uuid
+import json
 
 __db = None
 
@@ -40,7 +41,7 @@ def db_user_create(user:str,pword:str):
         idValue = 0
         for x in response:
             idValue = int(x)
-        __db.cursor().execute("""INSERT INTO profiles (userid) VALUES (?)""", (idValue,))
+        __db.cursor().execute("""INSERT INTO profiles (userid, solvedCodes) VALUES (?,?)""", (idValue,json.dumps([-1])))
 
         __db.commit()
 

@@ -1,14 +1,10 @@
 <html>
     <head>
         <link rel="stylesheet" type="text/css" href="/static/cipher.css"/>
-        <script>
-            
-        </script>
-    </head>
     <body>
         <form action="/patristocrat" method="POST">
             {% for i in letters %}
-                {{i}} <input class="letter" id="{{i}}" maxlength="1" size="1"/>
+                <div>{{i}} <input class="letter" id="{{i}}" maxlength="1" size="1"/></div>
             {% endfor %}
             <div id="checkbutton"><button name="mode" type="submit" value="check">Check</button></div>
         </form>
