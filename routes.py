@@ -201,4 +201,13 @@ def connect_routes(blueprint):
             resp = make_response(jsonify({'status' : 'success', 'data' : f'{user} has been deleted'}))
             resp.set_cookie('userid', '', expires=0)
             return resp
+    
+    @blueprint.route("/patristocrat")
+    def getCode():
+        userID = request.cookies.get('userid')
+        if userID == None:
+            return redirect('/login')
+        else:
+            letters = list(json.loads(R_Server.get(userID))['username'])
+            return render_template('cipherpage.j2', letters=letters, profile=json.loads(R_Server.get(userID)))
         
