@@ -20,7 +20,7 @@ function patristocratCipher(string,key,shift){
   let result = [];
   for (let i = 0; i < vals.length; i++){
     let value = vals[i].charCodeAt(0) - 64;
-    result.push(cipher[value]);
+    result.push(cipher[value]); 
   } 
   return result.join("");
 
