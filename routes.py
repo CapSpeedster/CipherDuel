@@ -7,7 +7,7 @@ import os
 from pathlib import Path
 import csv
 import random
-import patristo
+import codes
 
 # Connect to Redis
 R_Server = redis.StrictRedis()
@@ -80,7 +80,7 @@ def connect_routes(blueprint):
                 profile = database.get_profile(username)
                 R_Server.set(str(sessionID), json.dumps(profile))
 
-                resp = make_response(redirect(f'/profile/{username}'))
+                resp = make_response(redirect('/cipherselection'))
                 resp.set_cookie('userid', str(sessionID))
                 return resp
 
@@ -92,7 +92,7 @@ def connect_routes(blueprint):
                 profile = database.get_profile(username)
                 R_Server.set(str(sessionID), json.dumps(profile))
 
-                resp = make_response(redirect(f'/profile/{username}'))
+                resp = make_response(redirect('/cipherselection'))
                 resp.set_cookie('userid', str(sessionID))
                 return resp
             else:
@@ -208,8 +208,120 @@ def connect_routes(blueprint):
             return resp
     
     @blueprint.route("/patristocrat")
-    def getCode():
+    def getPat():
         userID = request.cookies.get('userid')
+        if userID == None:
+            return redirect('/login')
+        else:
+            with open('static/ciphers.csv', mode='r') as file:
+                csv_reader = csv.DictReader(file)
+                ciphers = []
+                for i in csv_reader:
+                    ciphers.append(i)
+            
+            patCiphers = []
+            for i in range(len(ciphers)):
+                if ciphers[i]['cipherType']=='patristocrat':
+                    patCiphers.append(ciphers[i])
+
+            solvedCodes = json.loads(json.loads(R_Server.get(userID))['solvedCodes'])
+
+            newCiphers = []
+            for i in patCiphers:
+                if i['plaintext'] not in solvedCodes:
+                    newCiphers.append(i)
+            if len(newCiphers) == 0:
+                return "You have completed all of our current ciphers. Wait for future updates to proceed."
+
+            else: 
+                keys=R_Server.get(userID+'keys')
+                if R_Server.get(userID+'keys')==None:
+                    randint = random.randint(0, len(newCiphers)-1)
+                    plaintext = newCiphers[randint]['plaintext']
+                    keyword = newCiphers[randint]['keyword']
+                    shift = random.randint(0, 25)
+    
+                    currentCode = dict(
+                        {
+                            'plaintext': plaintext,
+                            'key': keyword, 
+                            'shift': shift
+                         })
+                    R_Server.set(userID+'keys', json.dumps(currentCode))
+                else:
+                    plaintext = json.loads(keys)['plaintext']
+                    keyword = json.loads(keys)['key']
+                    shift = json.loads(keys)['shift']
+    
+                letters = list(codes.patristok1(plaintext, keyword, shift))
+    
+                return render_template('cipherpage.j2', letters=letters, profile=json.loads(R_Server.get(userID)))
+    @blueprint.route("/patristocrat", methods=['POST'])
+    def checkPat():
+        userID = request.cookies.get('userid')
+        username = json.loads(R_Server.get(userID))['username']
+        keys = json.loads(R_Server.get(userID+'keys'))
+        cipherbet=codes.form_cipher(keys['key'], int(keys['shift']))
+        inputLetters = request.form
+        alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+        correct = True
+
+        for i in alphabet:
+            index=cipherbet.index(i)
+            if inputLetters.get(i) == None or inputLetters.get(i)==alphabet[index]:
+                continue
+            else:
+                correct = False
+                break
+        
+        if correct:
+            flash('Correct Solution!', 'check')
+            R_Server.set(userID, json.dumps(database.correctCodes(username, keys['plaintext'])))
+            R_Server.delete(userID+'keys')
+        else:
+            flash("Incorrect Solution. Please try again.", 'check')
+
+        return redirect('/patristocrat')
+    
+    @blueprint.route("/aristocrat")
+    def getAri():
+        userID = request.cookies.get('userid')
+        if userID == None:
+            return redirect('/login')
+        else:
+            with open('static/ciphers.csv', mode='r') as file:
+                csv_reader = csv.DictReader(file)
+                ciphers = []
+                for i in csv_reader:
+                    ciphers.append(i)
+            
+            ariCiphers = []
+            for i in range(len(ciphers)):
+                if ciphers[i]['cipherType']=='aristocrat':
+                    ariCiphers.append(ciphers[i])
+
+            solvedCodes = json.loads(json.loads(R_Server.get(userID))['solvedCodes'])
+            
+            newCiphers = []
+            for i in ariCiphers:
+                if i['plaintext'] not in solvedCodes:
+                    newCiphers.append(i)
+            
+            randint = random.randint(0, len(newCiphers)-1)
+            plaintext = newCiphers[randint]['plaintext']
+            keyword = newCiphers[randint]['keyword']
+            shift = random.randint(0, 25)
+            letters = list(codes.patristok1(plaintext, keyword, shift))
+
+            return render_template('cipherpage.j2', letters=letters, profile=json.loads(R_Server.get(userID)))
+    
+    @blueprint.route('/patristocrat-solo')
+    def soloPat():
+        userID = request.cookies.get('userid')
+        if userID == None:
+            return redirect('/login')
+        else:
+            userID = request.cookies.get('userid')
         if userID == None:
             return redirect('/login')
         else:
@@ -235,7 +347,62 @@ def connect_routes(blueprint):
             plaintext = newCiphers[randint]['plaintext']
             keyword = newCiphers[randint]['keyword']
             shift = random.randint(0, 25)
-            letters = list(patristo.patristok1(plaintext, keyword, shift))
+            letters = list(codes.patristok1(plaintext, keyword, shift))
 
             return render_template('cipherpage.j2', letters=letters, profile=json.loads(R_Server.get(userID)))
+    
+    @blueprint.route("/aristocrat-solo")
+    def soloAri():
+        userID = request.cookies.get('userid')
+        if userID == None:
+            return redirect('/login')
+        else:
+            with open('static/ciphers.csv', mode='r') as file:
+                csv_reader = csv.DictReader(file)
+                ciphers = []
+                for i in csv_reader:
+                    ciphers.append(i)
+            
+            ariCiphers = []
+            for i in range(len(ciphers)):
+                if ciphers[i]['cipherType']=='aristocrat':
+                    ariCiphers.append(ciphers[i])
+
+            solvedCodes = json.loads(json.loads(R_Server.get(userID))['solvedCodes'])
+            
+            newCiphers = []
+            for i in ariCiphers:
+                if i['plaintext'] not in solvedCodes:
+                    newCiphers.append(i)
+            
+            randint = random.randint(0, len(newCiphers)-1)
+            plaintext = newCiphers[randint]['plaintext']
+            keyword = newCiphers[randint]['keyword']
+            shift = random.randint(0, 25)
+            letters = list(codes.patristok1(plaintext, keyword, shift))
+
+            return render_template('cipherpage.j2', letters=letters, profile=json.loads(R_Server.get(userID)))
+
+    @blueprint.route("/cipherselection")
+    def gCode():
+        userID = request.cookies.get('userid')
+        if userID == None:
+            return redirect('/login')
+        else:
+            return render_template('cipherselection.j2', profile = json.loads(R_Server.get(userID)))
         
+    @blueprint.route("/cipherselection", methods=['POST'])
+    def postSelect():
+        mode = request.form.get('mode')
+
+        if mode == 'patristocrat':
+            return redirect('/patristocrat')
+        elif mode == 'aristocrat':
+            return redirect('aristocrat')
+        elif mode == 'soloPat':
+            return redirect('/patristocrat-solo')
+        elif mode == 'soloAri':
+            return redirect('/aristocrat-solo')
+        else:
+            return 'ERROR: Incorrect Data'    
+            
