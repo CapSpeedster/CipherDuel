@@ -1,0 +1,28 @@
+<html>
+    <head>
+        <link rel="stylesheet" type="text/css" href="/static/cipher.css"/>
+        <script>
+            function updateText() {
+                let val = event.target.value;
+                let name = event.target.name;
+                let sameBoxes = document.getElementsByName(name);
+                for (let i = 0; i<sameBoxes.length; i++) {
+                    sameBoxes[i].value = val;
+                }
+            }
+            
+        </script>
+    <body>
+        <form action="/patristocrat" method="POST">
+            {% for i in letters %}
+                {% if i == ' '%}
+                    {{i}}
+                {% else %}
+                    {{i}} <input class="letter" name="{{i}}" maxlength="1" size="1" oninput="updateText()" required/>
+                {% endif %}
+            {% endfor %}
+            <div id="checkbutton"><button name="mode" type="submit" value="check">Check</button></div>
+        </form>
+
+    </body>
+</html>
