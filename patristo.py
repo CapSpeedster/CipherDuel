@@ -6,6 +6,18 @@ def text_clean(text, LETTERS='ABCDEFGHIJKLMNOPQRSTUVWXYZ'):
             cleaned_text+=char
     return cleaned_text
 
+def text_block(text, n=5):
+    blocked_text = ''
+    counter = 0
+    
+    for char in text:
+        blocked_text += char
+        counter += 1
+        if counter % 5 == 0:
+            blocked_text += ' '
+    
+    return blocked_text.strip()
+
 def form_cipher(key, shift, LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'):
     cipher = key+LETTERS
     result=[]
@@ -23,4 +35,4 @@ def patristok1(text, key, shift, LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'):
     for i in text:
         plaintext_num = LETTERS.find(i)
         plaintext+=cipher[plaintext_num]
-    return plaintext
+    return text_block(plaintext)
