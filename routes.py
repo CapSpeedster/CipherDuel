@@ -234,39 +234,44 @@ def connect_routes(blueprint):
                 return "You have completed all of our current ciphers. Wait for future updates to proceed."
 
             else: 
-                keys=R_Server.get(userID+'keys')
-                if R_Server.get(userID+'keys')==None:
+                keys=R_Server.get(userID+'pat')
+                if keys==None:
                     randint = random.randint(0, len(newCiphers)-1)
                     plaintext = newCiphers[randint]['plaintext']
                     keyword = newCiphers[randint]['keyword']
                     shift = random.randint(0, 25)
-    
                     currentCode = dict(
                         {
                             'plaintext': plaintext,
                             'key': keyword, 
                             'shift': shift
                          })
-                    R_Server.set(userID+'keys', json.dumps(currentCode))
+                    R_Server.set(userID+'pat', json.dumps(currentCode))
                 else:
                     plaintext = json.loads(keys)['plaintext']
                     keyword = json.loads(keys)['key']
                     shift = json.loads(keys)['shift']
     
                 letters = list(codes.patristok1(plaintext, keyword, shift))
+                frequency = codes.get_frequency(plaintext)
+                LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+
+                freqDict = dict()
+                for i in range(0, 26):
+                    freqDict[LETTERS[i]]=frequency[i]
     
-                return render_template('cipherpage.j2', letters=letters, profile=json.loads(R_Server.get(userID)))
+                return render_template('cipherpage.j2', letters=letters, profile=json.loads(R_Server.get(userID)), route='/patristocrat', freqDict=freqDict)
     @blueprint.route("/patristocrat", methods=['POST'])
     def checkPat():
         userID = request.cookies.get('userid')
         username = json.loads(R_Server.get(userID))['username']
-        keys = json.loads(R_Server.get(userID+'keys'))
+        keys = json.loads(R_Server.get(userID+'pat'))
         cipherbet=codes.form_cipher(keys['key'], int(keys['shift']))
         inputLetters = request.form
         alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
         correct = True
 
-        for i in alphabet:
+        for i in list(codes.text_clean(codes.patristok1(keys['plaintext'], keys['key'], keys['shift']))):
             index=cipherbet.index(i)
             if inputLetters.get(i) == None or inputLetters.get(i)==alphabet[index]:
                 continue
@@ -277,7 +282,7 @@ def connect_routes(blueprint):
         if correct:
             flash('Correct Solution!', 'check')
             R_Server.set(userID, json.dumps(database.correctCodes(username, keys['plaintext'])))
-            R_Server.delete(userID+'keys')
+            R_Server.delete(userID+'pat')
         else:
             flash("Incorrect Solution. Please try again.", 'check')
 
@@ -306,14 +311,36 @@ def connect_routes(blueprint):
             for i in ariCiphers:
                 if i['plaintext'] not in solvedCodes:
                     newCiphers.append(i)
-            
-            randint = random.randint(0, len(newCiphers)-1)
-            plaintext = newCiphers[randint]['plaintext']
-            keyword = newCiphers[randint]['keyword']
-            shift = random.randint(0, 25)
-            letters = list(codes.patristok1(plaintext, keyword, shift))
+            if len(newCiphers) == 0:
+                return "You have completed all of our current ciphers. Wait for future updates to proceed."
 
-            return render_template('cipherpage.j2', letters=letters, profile=json.loads(R_Server.get(userID)))
+            else: 
+                keys=R_Server.get(userID+'ari')
+                if keys==None:
+                    randint = random.randint(0, len(newCiphers)-1)
+                    plaintext = newCiphers[randint]['plaintext']
+                    keyword = newCiphers[randint]['keyword']
+                    shift = random.randint(0, 25)
+                    currentCode = dict(
+                        {
+                            'plaintext': plaintext,
+                            'key': keyword, 
+                            'shift': shift
+                         })
+                    R_Server.set(userID+'ari', json.dumps(currentCode))
+                else:
+                    plaintext = json.loads(keys)['plaintext']
+                    keyword = json.loads(keys)['key']
+                    shift = json.loads(keys)['shift']
+                letters = list(codes.patristok1(plaintext, keyword, shift))
+                frequency = codes.get_frequency(plaintext)
+                LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+                freqDict = dict()
+
+                for i in range(0, 26):
+                    freqDict[LETTERS[i]]=frequency[i]
+
+                return render_template('cipherpage.j2', letters=letters, profile=json.loads(R_Server.get(userID)), route='/aristocrat', freqDict=freqDict)
     
     @blueprint.route('/patristocrat-solo')
     def soloPat():
@@ -343,13 +370,36 @@ def connect_routes(blueprint):
                 if i['plaintext'] not in solvedCodes:
                     newCiphers.append(i)
             
-            randint = random.randint(0, len(newCiphers)-1)
-            plaintext = newCiphers[randint]['plaintext']
-            keyword = newCiphers[randint]['keyword']
-            shift = random.randint(0, 25)
-            letters = list(codes.patristok1(plaintext, keyword, shift))
+            if len(newCiphers) == 0:
+                return "You have completed all of our current ciphers. Wait for future updates to proceed."
 
-            return render_template('cipherpage.j2', letters=letters, profile=json.loads(R_Server.get(userID)))
+            else: 
+                keys=R_Server.get(userID+'pats')
+                if keys==None:
+                    randint = random.randint(0, len(newCiphers)-1)
+                    plaintext = newCiphers[randint]['plaintext']
+                    keyword = newCiphers[randint]['keyword']
+                    shift = random.randint(0, 25)
+                    currentCode = dict(
+                        {
+                            'plaintext': plaintext,
+                            'key': keyword, 
+                            'shift': shift
+                         })
+                    R_Server.set(userID+'pats', json.dumps(currentCode))
+                else:
+                    plaintext = json.loads(keys)['plaintext']
+                    keyword = json.loads(keys)['key']
+                    shift = json.loads(keys)['shift']
+                letters = list(codes.patristok1(plaintext, keyword, shift))
+                frequency = codes.get_frequency(plaintext)
+                LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+                freqDict = dict()
+
+                for i in range(0, 26):
+                    freqDict[LETTERS[i]]=frequency[i]
+
+                return render_template('cipherpage.j2', letters=letters, profile=json.loads(R_Server.get(userID)), route='/patristocrat-solo', freqDict=freqDict)
     
     @blueprint.route("/aristocrat-solo")
     def soloAri():
@@ -375,13 +425,36 @@ def connect_routes(blueprint):
                 if i['plaintext'] not in solvedCodes:
                     newCiphers.append(i)
             
-            randint = random.randint(0, len(newCiphers)-1)
-            plaintext = newCiphers[randint]['plaintext']
-            keyword = newCiphers[randint]['keyword']
-            shift = random.randint(0, 25)
-            letters = list(codes.patristok1(plaintext, keyword, shift))
+            if len(newCiphers) == 0:
+                return "You have completed all of our current ciphers. Wait for future updates to proceed."
 
-            return render_template('cipherpage.j2', letters=letters, profile=json.loads(R_Server.get(userID)))
+            else: 
+                keys=R_Server.get(userID+'aris')
+                if keys==None:
+                    randint = random.randint(0, len(newCiphers)-1)
+                    plaintext = newCiphers[randint]['plaintext']
+                    keyword = newCiphers[randint]['keyword']
+                    shift = random.randint(0, 25)
+                    currentCode = dict(
+                        {
+                            'plaintext': plaintext,
+                            'key': keyword, 
+                            'shift': shift
+                         })
+                    R_Server.set(userID+'aris', json.dumps(currentCode))
+                else:
+                    plaintext = json.loads(keys)['plaintext']
+                    keyword = json.loads(keys)['key']
+                    shift = json.loads(keys)['shift']
+                letters = list(codes.patristok1(plaintext, keyword, shift))
+                frequency = codes.get_frequency(plaintext)
+                LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+                freqDict = dict()
+
+                for i in range(0, 26):
+                    freqDict[LETTERS[i]]=frequency[i]
+
+                return render_template('cipherpage.j2', letters=letters, profile=json.loads(R_Server.get(userID)), route='/aristocrat-solo', freqDict=freqDict)
 
     @blueprint.route("/cipherselection")
     def gCode():

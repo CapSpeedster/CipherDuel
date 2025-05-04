@@ -13,7 +13,7 @@
             
         </script>
     <body>
-        <form action="/patristocrat" method="POST">
+        <form id='code' action="{{route}}" method="POST">
             {% for i in letters %}
                 {% if i == ' '%}
                     {{i}}
@@ -21,6 +21,11 @@
                     {{i}} <input class="letter" name="{{i}}" maxlength="1" size="1" oninput="updateText()" required/>
                 {% endif %}
             {% endfor %}
+            <div>
+                {% for i in freqDict %}
+                    {{i}} {{freqDict[i]}} <input class="letter" name="{{i}}" maxlength="1" size="1" oninput="updateText()"/>
+                {% endfor %}
+            </div>
             <div id="checkbutton"><button type="submit">Check</button></div>
         </form>
         <form id='cipherselect' action="/cipherselection">

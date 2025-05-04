@@ -6,11 +6,15 @@ form#profile{
     position: absolute;
     left:0.5%;
     top: 0%;
-
 }
 form#cipherselect{
     position: absolute;
     top: 50%;
+}
+form#code{
+    position: absolute;
+    right:0%;
+    width:100%;
 }
 div#checks{
     position: absolute;
