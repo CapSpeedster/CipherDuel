@@ -11,7 +11,6 @@ def db_connect():
 
     __db.cursor().execute("""CREATE TABLE IF NOT EXISTS accounts (id INTEGER PRIMARY KEY, username TEXT NOT NULL, password TEXT NOT NULL, salt TEXT)""")
     __db.cursor().execute("""CREATE TABLE IF NOT EXISTS profiles (userid INTEGER PRIMARY KEY NOT NULL, wins INTEGER DEFAULT 0, losses INTEGER DEFAULT 0, times JSON, solvedCodes JSON, avatar TEXT)""")
-    # __db.cursor().execute("""CREATE TABLE IF NOT EXISTS ciphers (id INTEGER PRIMARY KEY, plaintext TEXT, keyword TEXT, cipherType TEXT)""")
 
     __db.commit()
 
@@ -41,7 +40,7 @@ def db_user_create(user:str,pword:str):
         idValue = 0
         for x in response:
             idValue = int(x)
-        __db.cursor().execute("""INSERT INTO profiles (userid, solvedCodes) VALUES (?,?)""", (idValue,json.dumps([-1])))
+        __db.cursor().execute("""INSERT INTO profiles (userid, solvedCodes) VALUES (?,?)""", (idValue,json.dumps([''])))
 
         __db.commit()
 
@@ -176,3 +175,38 @@ def delete_user(user:str):
     __db.cursor().execute("""DELETE FROM accounts WHERE id = ?""", (idValue,))
     __db.cursor().execute("""DELETE FROM profiles WHERE userid = ?""", (idValue,))
     __db.commit()
+
+def correctCodes(user:str, plaintext:str):
+    __db = sqlite3.connect('user.db')
+
+    response = __db.cursor().execute("""SELECT id FROM accounts WHERE username = ?""", (user,)).fetchone()
+    idValue=0
+    for x in response:
+        idValue=int(x)
+    
+    response = __db.cursor().execute("""SELECT solvedCodes FROM profiles WHERE userid = ?""", (idValue,)).fetchone()
+    solvedCodes = []
+    for x in response:
+        solvedCodes = json.loads(x)
+
+    solvedCodes.append(plaintext)
+
+    __db.cursor().execute("""UPDATE profiles SET solvedCodes = ? WHERE userid = ?""", (json.dumps(solvedCodes), idValue))
+
+    __db.commit()
+
+    #get user profile
+    response = __db.cursor().execute("""SELECT wins, losses, times, solvedCodes, avatar FROM profiles WHERE userid = ?""", (idValue,))
+    profileDict = dict({
+        'username' : user
+    })
+
+    for x in response:
+        profileDict['wins'] = x[0]
+        profileDict['losses'] = x[1]
+        profileDict['times'] = x[2]
+        profileDict['solvedCodes'] = x[3]
+        profileDict['avatar'] = x[4]
+
+    return profileDict
+    

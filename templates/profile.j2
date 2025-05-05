@@ -18,6 +18,9 @@
         <div id="title"><img id="avatar" src="/static/avatars/{{profile['avatar']}}">{{profile['username']}}'s Profile</div>
         <div id="stats">Wins: {{profile['wins']}}   Losses: {{profile['losses']}}</div> 
         <div id="stats">Best Solve Time: {{bestTime}} seconds</div>
+        <form action="/cipherselection">
+            <button type="submit">Return to Cipher Select</button>
+        </form>
         {% if readonly == True %}
             <div>Currently Logged In Account: {{cUser}}</div>
         {% else %}

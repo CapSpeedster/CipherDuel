@@ -7,13 +7,13 @@
                 let name = event.target.name;
                 let sameBoxes = document.getElementsByName(name);
                 for (let i = 0; i<sameBoxes.length; i++) {
-                    sameBoxes[i].value = val;
+                    sameBoxes[i].value = val.toUpperCase();
                 }
             }
             
         </script>
     <body>
-        <form action="/patristocrat" method="POST">
+        <form id='code' action="{{route}}" method="POST">
             {% for i in letters %}
                 {% if i == ' '%}
                     {{i}}
@@ -21,8 +21,32 @@
                     {{i}} <input class="letter" name="{{i}}" maxlength="1" size="1" oninput="updateText()" required/>
                 {% endif %}
             {% endfor %}
-            <div id="checkbutton"><button name="mode" type="submit" value="check">Check</button></div>
+            <div>
+                {% if isK2 %}
+                    {% for i in freqDict %}
+                        <input class="letter" name="{{i}}" maxlength="1" size="1" oninput="updateText()"/> {{i}} {{freqDict[i]}}
+                    {% endfor %}
+                {%else%}
+                    {% for i in freqDict %}
+                        {{i}} {{freqDict[i]}} <input class="letter" name="{{i}}" maxlength="1" size="1" oninput="updateText()"/>
+                    {% endfor %}
+                {% endif %}
+            </div>
+            <div id="checkbutton"><button type="submit">Check</button></div>
         </form>
+        <form id='cipherselect' action="/cipherselection">
+            <button type="submit">Back to Cipher Selection</button>
+        </form>
+        <div id="checks">
+            {% with checks = get_flashed_messages(category_filter=["check"]) %}
+                {% if checks %}
+                    {% for msg in checks%}
+                        {{msg}}
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+        
 
     </body>
 </html>
