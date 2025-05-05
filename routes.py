@@ -207,7 +207,7 @@ def connect_routes(blueprint):
             resp.set_cookie('userid', '', expires=0)
             return resp
     
-    @blueprint.route("/patristocrat")
+    @blueprint.route("/patristocrat-k1")
     def getPat():
         userID = request.cookies.get('userid')
         if userID == None:
@@ -219,22 +219,22 @@ def connect_routes(blueprint):
                 for i in csv_reader:
                     ciphers.append(i)
             
-            patCiphers = []
+            k1Ciphers = []
             for i in range(len(ciphers)):
-                if ciphers[i]['cipherType']=='patristocrat':
-                    patCiphers.append(ciphers[i])
+                if ciphers[i]['cipherType']=='k1':
+                    k1Ciphers.append(ciphers[i])
 
             solvedCodes = json.loads(json.loads(R_Server.get(userID))['solvedCodes'])
 
             newCiphers = []
-            for i in patCiphers:
+            for i in k1Ciphers:
                 if i['plaintext'] not in solvedCodes:
                     newCiphers.append(i)
             if len(newCiphers) == 0:
-                return "You have completed all of our current ciphers. Wait for future updates to proceed."
+                return "You have completed all of our current ciphers. Wait for future updates to proceed." #Create j2 file with button to return to profile
 
             else: 
-                keys=R_Server.get(userID+'pat')
+                keys=R_Server.get(userID+'pat1')
                 if keys==None:
                     randint = random.randint(0, len(newCiphers)-1)
                     plaintext = newCiphers[randint]['plaintext']
@@ -246,7 +246,7 @@ def connect_routes(blueprint):
                             'key': keyword, 
                             'shift': shift
                          })
-                    R_Server.set(userID+'pat', json.dumps(currentCode))
+                    R_Server.set(userID+'pat1', json.dumps(currentCode))
                 else:
                     plaintext = json.loads(keys)['plaintext']
                     keyword = json.loads(keys)['key']
@@ -260,12 +260,12 @@ def connect_routes(blueprint):
                 for i in range(0, 26):
                     freqDict[LETTERS[i]]=frequency[i]
     
-                return render_template('cipherpage.j2', letters=letters, profile=json.loads(R_Server.get(userID)), route='/patristocrat', freqDict=freqDict)
-    @blueprint.route("/patristocrat", methods=['POST'])
+                return render_template('cipherpage.j2', letters=letters, profile=json.loads(R_Server.get(userID)), route='/patristocrat-k1', freqDict=freqDict, isK2=False)
+    @blueprint.route("/patristocrat-k1", methods=['POST'])
     def checkPat():
         userID = request.cookies.get('userid')
         username = json.loads(R_Server.get(userID))['username']
-        keys = json.loads(R_Server.get(userID+'pat'))
+        keys = json.loads(R_Server.get(userID+'pat1'))
         cipherbet=codes.form_cipher(keys['key'], int(keys['shift']))
         inputLetters = request.form
         alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
@@ -282,13 +282,13 @@ def connect_routes(blueprint):
         if correct:
             flash('Correct Solution!', 'check')
             R_Server.set(userID, json.dumps(database.correctCodes(username, keys['plaintext'])))
-            R_Server.delete(userID+'pat')
+            R_Server.delete(userID+'pat1')
         else:
             flash("Incorrect Solution. Please try again.", 'check')
 
         return redirect('/patristocrat')
     
-    @blueprint.route("/aristocrat")
+    @blueprint.route("/patristocrat-k2")
     def getAri():
         userID = request.cookies.get('userid')
         if userID == None:
@@ -300,22 +300,22 @@ def connect_routes(blueprint):
                 for i in csv_reader:
                     ciphers.append(i)
             
-            ariCiphers = []
+            k2Ciphers = []
             for i in range(len(ciphers)):
-                if ciphers[i]['cipherType']=='aristocrat':
-                    ariCiphers.append(ciphers[i])
+                if ciphers[i]['cipherType']=='k2':
+                    k2Ciphers.append(ciphers[i])
 
             solvedCodes = json.loads(json.loads(R_Server.get(userID))['solvedCodes'])
             
             newCiphers = []
-            for i in ariCiphers:
+            for i in k2Ciphers:
                 if i['plaintext'] not in solvedCodes:
                     newCiphers.append(i)
             if len(newCiphers) == 0:
-                return "You have completed all of our current ciphers. Wait for future updates to proceed."
+                return "You have completed all of our current ciphers. Wait for future updates to proceed." #Create j2 file with button to return to profile
 
             else: 
-                keys=R_Server.get(userID+'ari')
+                keys=R_Server.get(userID+'pat2')
                 if keys==None:
                     randint = random.randint(0, len(newCiphers)-1)
                     plaintext = newCiphers[randint]['plaintext']
@@ -327,12 +327,12 @@ def connect_routes(blueprint):
                             'key': keyword, 
                             'shift': shift
                          })
-                    R_Server.set(userID+'ari', json.dumps(currentCode))
+                    R_Server.set(userID+'pat2', json.dumps(currentCode))
                 else:
                     plaintext = json.loads(keys)['plaintext']
                     keyword = json.loads(keys)['key']
                     shift = json.loads(keys)['shift']
-                letters = list(codes.patristok1(plaintext, keyword, shift))
+                letters = list(codes.patristok2(plaintext, keyword, shift))
                 frequency = codes.get_frequency(plaintext)
                 LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
                 freqDict = dict()
@@ -340,9 +340,9 @@ def connect_routes(blueprint):
                 for i in range(0, 26):
                     freqDict[LETTERS[i]]=frequency[i]
 
-                return render_template('cipherpage.j2', letters=letters, profile=json.loads(R_Server.get(userID)), route='/aristocrat', freqDict=freqDict)
+                return render_template('cipherpage.j2', letters=letters, profile=json.loads(R_Server.get(userID)), route='/aristocrat', freqDict=freqDict, isK2=True)
     
-    @blueprint.route('/patristocrat-solo')
+    @blueprint.route('/patristocrat-k1-solo')
     def soloPat():
         userID = request.cookies.get('userid')
         if userID == None:
@@ -360,7 +360,7 @@ def connect_routes(blueprint):
             
             patCiphers = []
             for i in range(len(ciphers)):
-                if ciphers[i]['cipherType']=='patristocrat':
+                if ciphers[i]['cipherType']=='k1':
                     patCiphers.append(ciphers[i])
 
             solvedCodes = json.loads(json.loads(R_Server.get(userID))['solvedCodes'])
@@ -371,10 +371,10 @@ def connect_routes(blueprint):
                     newCiphers.append(i)
             
             if len(newCiphers) == 0:
-                return "You have completed all of our current ciphers. Wait for future updates to proceed."
+                return "You have completed all of our current ciphers. Wait for future updates to proceed." #Create j2 file with button to return to profile
 
             else: 
-                keys=R_Server.get(userID+'pats')
+                keys=R_Server.get(userID+'pat1s')
                 if keys==None:
                     randint = random.randint(0, len(newCiphers)-1)
                     plaintext = newCiphers[randint]['plaintext']
@@ -386,7 +386,7 @@ def connect_routes(blueprint):
                             'key': keyword, 
                             'shift': shift
                          })
-                    R_Server.set(userID+'pats', json.dumps(currentCode))
+                    R_Server.set(userID+'pat1s', json.dumps(currentCode))
                 else:
                     plaintext = json.loads(keys)['plaintext']
                     keyword = json.loads(keys)['key']
@@ -399,9 +399,9 @@ def connect_routes(blueprint):
                 for i in range(0, 26):
                     freqDict[LETTERS[i]]=frequency[i]
 
-                return render_template('cipherpage.j2', letters=letters, profile=json.loads(R_Server.get(userID)), route='/patristocrat-solo', freqDict=freqDict)
+                return render_template('cipherpage.j2', letters=letters, profile=json.loads(R_Server.get(userID)), route='/patristocrat-k1-solo', freqDict=freqDict, isK2=False)
     
-    @blueprint.route("/aristocrat-solo")
+    @blueprint.route("/patristocrat-k2-solo")
     def soloAri():
         userID = request.cookies.get('userid')
         if userID == None:
@@ -413,23 +413,23 @@ def connect_routes(blueprint):
                 for i in csv_reader:
                     ciphers.append(i)
             
-            ariCiphers = []
+            k2Ciphers = []
             for i in range(len(ciphers)):
-                if ciphers[i]['cipherType']=='aristocrat':
-                    ariCiphers.append(ciphers[i])
+                if ciphers[i]['cipherType']=='k2':
+                    k2Ciphers.append(ciphers[i])
 
             solvedCodes = json.loads(json.loads(R_Server.get(userID))['solvedCodes'])
             
             newCiphers = []
-            for i in ariCiphers:
+            for i in k2Ciphers:
                 if i['plaintext'] not in solvedCodes:
                     newCiphers.append(i)
             
             if len(newCiphers) == 0:
-                return "You have completed all of our current ciphers. Wait for future updates to proceed."
+                return "You have completed all of our current ciphers. Wait for future updates to proceed." #Create j2 file with button to return to profile
 
             else: 
-                keys=R_Server.get(userID+'aris')
+                keys=R_Server.get(userID+'pat2s')
                 if keys==None:
                     randint = random.randint(0, len(newCiphers)-1)
                     plaintext = newCiphers[randint]['plaintext']
@@ -441,12 +441,12 @@ def connect_routes(blueprint):
                             'key': keyword, 
                             'shift': shift
                          })
-                    R_Server.set(userID+'aris', json.dumps(currentCode))
+                    R_Server.set(userID+'pat2s', json.dumps(currentCode))
                 else:
                     plaintext = json.loads(keys)['plaintext']
                     keyword = json.loads(keys)['key']
                     shift = json.loads(keys)['shift']
-                letters = list(codes.patristok1(plaintext, keyword, shift))
+                letters = list(codes.patristok2(plaintext, keyword, shift))
                 frequency = codes.get_frequency(plaintext)
                 LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
                 freqDict = dict()
@@ -454,7 +454,7 @@ def connect_routes(blueprint):
                 for i in range(0, 26):
                     freqDict[LETTERS[i]]=frequency[i]
 
-                return render_template('cipherpage.j2', letters=letters, profile=json.loads(R_Server.get(userID)), route='/aristocrat-solo', freqDict=freqDict)
+                return render_template('cipherpage.j2', letters=letters, profile=json.loads(R_Server.get(userID)), route='/patristocrat-k2-solo', freqDict=freqDict, isK2=True)
 
     @blueprint.route("/cipherselection")
     def gCode():
@@ -468,14 +468,14 @@ def connect_routes(blueprint):
     def postSelect():
         mode = request.form.get('mode')
 
-        if mode == 'patristocrat':
-            return redirect('/patristocrat')
-        elif mode == 'aristocrat':
-            return redirect('aristocrat')
-        elif mode == 'soloPat':
-            return redirect('/patristocrat-solo')
-        elif mode == 'soloAri':
-            return redirect('/aristocrat-solo')
+        if mode == 'patristocrat-k1':
+            return redirect('/patristocrat-k1')
+        elif mode == 'patristocrat-k2':
+            return redirect('/patristocrat-k2')
+        elif mode == 'soloPat1':
+            return redirect('/patristocrat-k1-solo')
+        elif mode == 'soloPat2':
+            return redirect('/patristocrat-k2-solo')
         else:
             return 'ERROR: Incorrect Data'    
             

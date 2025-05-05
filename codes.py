@@ -33,6 +33,15 @@ def patristok1(text, key, shift, LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'):
     cipher=form_cipher(text_clean(key), shift)
     plaintext=''
     for i in text:
+        ciphertext_num = cipher.find(i)
+        plaintext+=LETTERS[ciphertext_num]
+    return text_block(plaintext)
+
+def patristok2(text, key, shift, LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'):
+    text = text_clean(text)
+    cipher = form_cipher(text_clean(key), shift)
+    plaintext=''
+    for i in text:
         plaintext_num = LETTERS.find(i)
         plaintext+=cipher[plaintext_num]
     return text_block(plaintext)

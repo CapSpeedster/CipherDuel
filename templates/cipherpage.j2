@@ -22,9 +22,15 @@
                 {% endif %}
             {% endfor %}
             <div>
-                {% for i in freqDict %}
-                    {{i}} {{freqDict[i]}} <input class="letter" name="{{i}}" maxlength="1" size="1" oninput="updateText()"/>
-                {% endfor %}
+                {% if isK2 %}
+                    {% for i in freqDict %}
+                        <input class="letter" name="{{i}}" maxlength="1" size="1" oninput="updateText()"/> {{i}} {{freqDict[i]}}
+                    {% endfor %}
+                {%else%}
+                    {% for i in freqDict %}
+                        {{i}} {{freqDict[i]}} <input class="letter" name="{{i}}" maxlength="1" size="1" oninput="updateText()"/>
+                    {% endfor %}
+                {% endif %}
             </div>
             <div id="checkbutton"><button type="submit">Check</button></div>
         </form>
