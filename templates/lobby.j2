@@ -1,0 +1,13 @@
+<html>
+    <head>
+    
+    </head>
+    <body>
+        <form action="/lobby", method="POST">
+            <button type="submit" name="mode" value="create">Create Lobby</button>
+            {% for i in values %}
+                {{keys[values.index(i)]}}: <button type="submit" name="mode" value="{{i}}">Join Lobby</button>
+            {% endfor %}
+        </form>
+    </body>
+</html>

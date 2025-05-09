@@ -1,0 +1,27 @@
+<html>
+    <head>
+        <script>
+            async connect(){
+                let packet = {
+                    'action' : 'connection',
+                    'data' : {
+                        'user' : userID
+                    }
+                }
+
+                let response = await fetch('', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type' : 'application/json'
+                    },
+                    body: JSON.stringify(packet)
+                })
+            }
+
+            window.onload =connect;
+        </script>
+    </head>
+    <body>
+        <div>Waiting for other user. MatchID: {{matchID}}</div>
+    </body>
+</html>
