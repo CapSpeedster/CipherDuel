@@ -292,7 +292,7 @@ def connect_routes(blueprint):
             else:
                 letters = list(codes.patristok1(currentCode['plaintext'], currentCode['key'], currentCode['shift']))
                 frequency = codes.get_frequency(codes.patristok1(currentCode['plaintext'], currentCode['key'], currentCode['shift']))
-                
+
             LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
             freqDict = dict()
             for i in range(0, 26):
@@ -538,48 +538,6 @@ def connect_routes(blueprint):
                 return resp
             else: 
                 return 'ERROR: Incomplete Data'
-    
-    # @blueprint.route('/waiting-room')
-    # def setUp():
-    #     matchID = request.cookies.get('matchid')
-    #     userID = request.cookies.get('userid')
-    #     if matchID == None:
-    #         return redirect('/lobby')
-    #     else:
-    #         if R_Server.get(matchID+'users'):
-    #             users = json.loads(R_Server.get(matchID+'users'))
-    #             print(users)
-    #             if len(users) == 2:
-    #                 return redirect('/patristocrat')
-    #             else:
-    #                 return render_template('waiting-room.j2', matchID=matchID, userID=userID)
-    #         else:
-    #             return render_template('waiting-room.j2', matchID=matchID, userID=userID)
-    
-    # @blueprint.route('/waiting-room', methods=['PUT'])
-    # def putInGame():
-    #     matchID = request.cookies.get('matchid')
-    #     userID = request.cookies.get('userid')
-
-    #     body = request.get_json()
-    #     if 'action' not in body or 'data' not in body:
-    #         return jsonify({'status' : 'error', 'data' : 'incomplete data'})
-    #     action = body.get('action')
-
-    #     if action == 'connection':
-    #         if R_Server.get(matchID+'users'):
-    #             users = json.loads(R_Server.get(matchID+'users'))
-    #             users.append(userID)
-    #             R_Server.set(matchID+'users', json.dumps(users))
-    #         else:
-    #             users = [userID]
-    #             R_Server.set(matchID+'users', json.dumps(users))
-    #     else:
-    #         return jsonify({'status' : 'error', 'data' : 'incomplete data'})
-        
-    #     return jsonify({'status' : 'success', 'data' : 'added user to match users'})
-
-
 
     @blueprint.route('/stream')
     def multiStream():
