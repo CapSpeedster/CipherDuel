@@ -1,12 +1,11 @@
 <html>
     <head>
         <script>
-            async connect(){
+            async function connect(){
+                console.log('Connecting')
                 let packet = {
                     'action' : 'connection',
-                    'data' : {
-                        'user' : userID
-                    }
+                    'data' : {}
                 }
 
                 let response = await fetch('', {
@@ -18,7 +17,7 @@
                 })
             }
 
-            window.onload =connect;
+            window.onload = connect;
         </script>
     </head>
     <body>

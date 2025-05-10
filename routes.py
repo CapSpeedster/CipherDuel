@@ -214,6 +214,7 @@ def connect_routes(blueprint):
     def getPat():
         userID = request.cookies.get('userid')
         matchID = request.cookies.get('matchid')
+        isK2=False
         if userID == None:
             return redirect('/login')
         else:
@@ -241,7 +242,6 @@ def connect_routes(blueprint):
                         randint = random.randint(0, len(newCiphers)-1)
                         plaintext = newCiphers[randint]['plaintext']
                         keyword = newCiphers[randint]['keyword']
-                        isK2=False
                         if newCiphers[randint]['cipherType'] == 'k2':
                             isK2=True
                         shift = random.randint(0, 25)
@@ -249,7 +249,8 @@ def connect_routes(blueprint):
                             {
                                 'plaintext': plaintext,
                                 'key': keyword, 
-                                'shift': shift
+                                'shift': shift,
+                                'isK2' : isK2
                              })
                         R_Server.set(userID+'pat1', json.dumps(currentCode))
                     else:
@@ -271,6 +272,36 @@ def connect_routes(blueprint):
 
                     return render_template('cipherpage.j2', letters=letters, profile=json.loads(R_Server.get(userID)), route='/patristocrat', freqDict=freqDict, isK2=isK2)
    
+    @blueprint.route('/patristocrat', methods=['PUT'])
+    def putPat():
+        userID = request.cookies.get('userid')
+        matchID = request.cookies.get('matchid')
+
+        body = request.get_json()
+        if 'action' not in body or 'data' not in body:
+            return jsonify({'status' : 'error', 'data' : 'incomplete data'})
+        action = body.get('action')
+
+        if action == 'connect':
+            currentCode = json.loads(R_Server.get(userID+'pat1'))
+            print(currentCode)
+            isK2 = currentCode['isK2']
+            if isK2:
+                letters = list(codes.patristok2(currentCode['plaintext'], currentCode['key'], currentCode['shift']))
+                frequency = codes.get_frequency(codes.patristok2(currentCode['plaintext'], currentCode['key'], currentCode['shift']))
+            else:
+                letters = list(codes.patristok1(currentCode['plaintext'], currentCode['key'], currentCode['shift']))
+                frequency = codes.get_frequency(codes.patristok1(currentCode['plaintext'], currentCode['key'], currentCode['shift']))
+                
+            LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+            freqDict = dict()
+            for i in range(0, 26):
+                freqDict[LETTERS[i]]=frequency[i]
+
+            R_Server.publish(matchID, json.dumps({'event' : 'updateCode', 'letters' : letters, 'frequency' : freqDict, 'isK2' : isK2}))
+            return jsonify({'status' : 'success', 'data' : 'published server data'})
+        else:
+            return jsonify({'status' : 'error', 'data' : 'incomplete data'})
     
     @blueprint.route('/patristocrat-k1-solo')
     def soloPat():
@@ -492,7 +523,7 @@ def connect_routes(blueprint):
                 else:
                     R_Server.set('matches', json.dumps({json.loads(R_Server.get(userID))['username']:matchID}))
 
-                resp = make_response(redirect('/waiting-room'))
+                resp = make_response(redirect('/patristocrat'))
                 resp.set_cookie('matchid', matchID)
                 return resp
             if mode in list(json.loads(matches).values()):
@@ -502,52 +533,51 @@ def connect_routes(blueprint):
                 del matchDict[host]
                 R_Server.set('matches', json.dumps(matchDict))
 
-                resp = make_response(redirect('/waiting-room'))
+                resp = make_response(redirect('/patristocrat'))
                 resp.set_cookie('matchid', matchID)
                 return resp
             else: 
                 return 'ERROR: Incomplete Data'
     
-    @blueprint.route('/waiting-room')
-    def setUp():
-        matchID = request.cookies.get('matchid')
-        userID = request.cookies.get('userid')
-        if matchID == None:
-            return redirect('/lobby')
-        else:
-            if R_Server.get(matchID+'users'):
-                users = json.loads(R_Server.get(matchID+'users'))
-                print(users)
-                if len(users) == 2:
-                    return redirect('/patristocrat')
-                else:
-                    return render_template('waiting-room.j2', matchID=matchID, userID=userID)
-            else:
-                return render_template('waiting-room.j2', matchID=matchID, userID=userID)
+    # @blueprint.route('/waiting-room')
+    # def setUp():
+    #     matchID = request.cookies.get('matchid')
+    #     userID = request.cookies.get('userid')
+    #     if matchID == None:
+    #         return redirect('/lobby')
+    #     else:
+    #         if R_Server.get(matchID+'users'):
+    #             users = json.loads(R_Server.get(matchID+'users'))
+    #             print(users)
+    #             if len(users) == 2:
+    #                 return redirect('/patristocrat')
+    #             else:
+    #                 return render_template('waiting-room.j2', matchID=matchID, userID=userID)
+    #         else:
+    #             return render_template('waiting-room.j2', matchID=matchID, userID=userID)
     
-    @blueprint.route('/waiting-room', methods=['PUT'])
-    def putInGame():
-        matchID = request.cookies.get('matchid')
+    # @blueprint.route('/waiting-room', methods=['PUT'])
+    # def putInGame():
+    #     matchID = request.cookies.get('matchid')
+    #     userID = request.cookies.get('userid')
 
-        body = request.get_json()
-        if 'action' not in body or 'data' not in body:
-            return jsonify({'status' : 'error', 'data' : 'incomplete data'})
-        action = body.get('action')
-        data = body.get('data')
+    #     body = request.get_json()
+    #     if 'action' not in body or 'data' not in body:
+    #         return jsonify({'status' : 'error', 'data' : 'incomplete data'})
+    #     action = body.get('action')
 
-        if action == 'connection':
-            lobbyUser = data['user']
-            if R_Server.get(matchID+'users'):
-                users = json.loads(R_Server.get(matchID+'users'))
-                users.append(lobbyUser)
-                R_Server.set(matchID+'users', users)
-            else:
-                users = [lobbyUser]
-                R_Server.set(matchID+'users', users)
-        else:
-            return jsonify({'status' : 'error', 'data' : 'incomplete data'})
+    #     if action == 'connection':
+    #         if R_Server.get(matchID+'users'):
+    #             users = json.loads(R_Server.get(matchID+'users'))
+    #             users.append(userID)
+    #             R_Server.set(matchID+'users', json.dumps(users))
+    #         else:
+    #             users = [userID]
+    #             R_Server.set(matchID+'users', json.dumps(users))
+    #     else:
+    #         return jsonify({'status' : 'error', 'data' : 'incomplete data'})
         
-        return redirect('/waiting-room')
+    #     return jsonify({'status' : 'success', 'data' : 'added user to match users'})
 
 
 

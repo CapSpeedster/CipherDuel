@@ -1,83 +1,160 @@
 <html>
-    <head>
-        <link rel="stylesheet" type="text/css" href="/static/cipher.css"/>
-        <style>
-            .cipher-grid {
-                display: grid;
-                grid-template-columns: repeat(auto-fill, minmax(30px, 1fr));
-                gap: 5px;
-                justify-items: center;
-                max-width: 90%;
-                margin: auto;
+<head>
+    <link rel="stylesheet" type="text/css" href="/static/cipher.css"/>
+    <style>
+        .cipher-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(30px, 1fr));
+            gap: 5px;
+            justify-items: center;
+            max-width: 90%;
+            margin: auto;
+        }
+
+        .cipher-pair {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .cipher-input {
+            width: 25px;
+            text-align: center;
+        }
+
+        .cipher-letter {
+            font-weight: bold;
+            margin-bottom: 2px;
+        }
+
+        #checkbutton {
+            margin-top: 20px;
+            text-align: center;
+        }
+    </style>
+    <script>
+        function updateText() {
+            let val = event.target.value;
+            let name = event.target.name;
+            let sameBoxes = document.getElementsByName(name);
+            for (let i = 0; i < sameBoxes.length; i++) {
+                sameBoxes[i].value = val.toUpperCase();
             }
-    
-            .cipher-pair {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
+        }
+
+        function init() {
+            connect();
+            streamEvent();
+        }
+
+        async function connect(){
+            let packet = {
+                'action' : 'connect',
+                'data' : {}
             }
-    
-            .cipher-input {
-                width: 25px;
-                text-align: center;
-            }
-    
-            .cipher-letter {
-                font-weight: bold;
-                margin-bottom: 2px;
-            }
-    
-            #checkbutton {
-                margin-top: 20px;
-                text-align: center;
-            }
-        </style>
-        <script>
-            function updateText() {
-                let val = event.target.value;
-                let name = event.target.name;
-                let sameBoxes = document.getElementsByName(name);
-                for (let i = 0; i<sameBoxes.length; i++) {
-                    sameBoxes[i].value = val.toUpperCase();
+
+            let response = await fetch('', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type' : 'application/json'
+                },
+                body: JSON.stringify(packet)
+            })
+        }
+
+        function streamEvent() {
+            let streamEvent = new EventSource(`/stream`);
+
+            //Grab data from correct gameID and parses it
+            streamEvent.onmessage = function(event) {
+                let data = JSON.parse(event.data);
+                console.log(data);
+                handleStreamEvent(data);
+            };
+        }
+
+        function handleStreamEvent(data){
+            if (data.event == 'updateCode') {
+                let cipherPair = document.createElement('div');
+                cipherPair.setAttribute('class', 'cipher-pair');
+                let grid = document.getElementById('grid')
+                
+                document.getElementById('grid').innerHTML = '';
+
+                let letters = data.letters;
+                for (let i = 0; i<letters.length; i++){
+                    if (letters[i] == ' '){
+                        let letterDiv = document.createElement('div');
+                        letterDiv.setAttribute('style', 'width: 30px;')
+                        cipherPair.appendChild(letterDiv)
+                        grid.appendChild(cipherPair)
+                    }
+                    let letterDiv = document.createElement('div');
+                    letterDiv.setAttribute('class', 'cipher-letter');
+                    let letterInput = document.createElement('input');
+                    letterInput.setAttribute('class', 'cipher-input letter');
+                    letterInput.setAttribute('name', i);
+                    letterInput.setAttribute('maxlength', '1');
+                    letterInput.setAttribute('oninput', 'updateText()');
+                    letterInput.setAttribute('required', 'required');
+                    letterDiv.innerHTML = letters[i];
+                    cipherPair.appendChild(letterDiv);
+                    cipherPair.appendChild(letterInput);
+                    grid.appendChild(cipherPair)
                 }
             }
-            
-        </script>
-    <body>
-        <form id='code' action="{{route}}" method="POST">
+        }
+
+        window.onload = init()
+        
+    </script>
+</head>
+<body>
+    <form id="code" action="{{ route }}" method="POST">
+        <div id='grid' class="cipher-grid">
             {% for i in letters %}
-                {% if i == ' '%}
-                    {{i}}
+                {% if i == ' ' %}
+                    <div style="width: 30px;"></div>
                 {% else %}
-                    {{i}} <input class="letter" name="{{i}}" maxlength="1" size="1" oninput="updateText()" required/>
+                    <div class="cipher-pair">
+                        <div class="cipher-letter">{{ i }}</div>
+                        <input class="cipher-input letter" name="{{ i }}" maxlength="1" oninput="updateText()" required />
+                    </div>
                 {% endif %}
             {% endfor %}
-            <div>
-                {% if isK2 %}
-                    {% for i in freqDict %}
-                        <input class="letter" name="{{i}}" maxlength="1" size="1" oninput="updateText()"/> {{i}} {{freqDict[i]}}
-                    {% endfor %}
-                {%else%}
-                    {% for i in freqDict %}
-                        {{i}} {{freqDict[i]}} <input class="letter" name="{{i}}" maxlength="1" size="1" oninput="updateText()"/>
-                    {% endfor %}
-                {% endif %}
-            </div>
-            <div id="checkbutton"><button type="submit">Check</button></div>
-        </form>
-        <form id='cipherselect' action="/cipherselection">
-            <button type="submit">Back to Cipher Selection</button>
-        </form>
-        <div id="checks">
-            {% with checks = get_flashed_messages(category_filter=["check"]) %}
-                {% if checks %}
-                    {% for msg in checks%}
-                        {{msg}}
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
         </div>
-        
 
-    </body>
+        <div>
+            {% if isK2 %}
+                {% for i in freqDict %}
+                    <input class="letter" name="{{ i }}" maxlength="1" size="1" oninput="updateText()" />
+                    {{ i }} {{ freqDict[i] }}
+                {% endfor %}
+            {% else %}
+                {% for i in freqDict %}
+                    {{ i }} {{ freqDict[i] }}
+                    <input class="letter" name="{{ i }}" maxlength="1" size="1" oninput="updateText()" />
+                {% endfor %}
+            {% endif %}
+        </div>
+
+        <div id="checkbutton">
+            <button type="submit">Check</button>
+        </div>
+    </form>
+
+    <form id="cipherselect" action="/cipherselection">
+        <button type="submit">Back to Cipher Selection</button>
+    </form>
+
+    <div id="checks">
+        {% with checks = get_flashed_messages(category_filter=["check"]) %}
+            {% if checks %}
+                {% for msg in checks %}
+                    {{ msg }}
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+</body>
 </html>
