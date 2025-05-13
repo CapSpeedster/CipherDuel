@@ -1,0 +1,72 @@
+<html>
+  <head>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+  </head>
+  <body>
+    <h1>Cipher Duel Lobby</h1>
+    
+    <!-- User info -->
+    <div class="user-info">
+      <p>Welcome, {{ username }}!</p>
+    </div>
+
+    <!-- CREATE -->
+    <div class="create-lobby">
+      <h2>Create New Game</h2>
+      <form action="/lobby" method="POST">
+        <button name="mode" value="create">Create Lobby</button>
+      </form>
+    </div>
+
+    <!-- Available Lobbies -->
+    <div class="available-lobbies">
+      <h2>Available Games</h2>
+      {% if matches %}
+        <div class="lobby-list">
+          {% for id, match in matches.items() %}
+            <div class="lobby-item">
+              <span>Host: {{ match.host }}</span>
+              <span>Players: {{ match.players|length }}/2</span>
+              <span>Created: {{ match.created_at }}</span>
+              {% if match.players|length < 2 %}
+                <form action="/lobby" method="POST" style="display: inline;">
+                  <input type="hidden" name="lobby_id" value="{{ id }}">
+                  <button name="mode" value="join">Join Game</button>
+                </form>
+              {% else %}
+                <span class="full-lobby">Full</span>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p>No active games available.</p>
+      {% endif %}
+    </div>
+
+    <!-- JOIN BY CODE -->
+    <div class="join-by-code">
+      <h2>Join by Code</h2>
+      <form action="/lobby" method="POST">
+        <input type="text"
+               name="lobby_id"
+               placeholder="Enter lobby code"
+               required />
+        <button name="mode" value="join">Join Lobby</button>
+      </form>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-messages">
+          {% for category, message in messages %}
+            <div class="flash-{{ category }}">
+              {{ message }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+  </body>
+</html>
