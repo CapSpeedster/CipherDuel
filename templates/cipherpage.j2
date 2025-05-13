@@ -123,6 +123,10 @@
                 {% endif %}
             {% endfor %}
         </div>
+    
+    {% if matchid %}
+    <p>Your lobby code: <strong>{{ matchid }}</strong></p>
+    {% endif %}
 
         <div>
             {% if isK2 %}

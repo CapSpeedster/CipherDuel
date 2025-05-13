@@ -1,13 +1,17 @@
 from flask import Flask, jsonify, Response, request, send_file, redirect, render_template, make_response, flash
-import database
-import redis
-import uuid
-import json
-import os
 from pathlib import Path
+from datetime import datetime
+import redis
+import json
+import uuid
+import os
+import database
 import csv
 import random
 import codes
+
+
+# app.run(threaded=True)
 
 # Connect to Redis
 R_Server = redis.StrictRedis()
@@ -214,94 +218,124 @@ def connect_routes(blueprint):
     def getPat():
         userID = request.cookies.get('userid')
         matchID = request.cookies.get('matchid')
-        isK2=False
+        isK2 = False
+
         if userID == None:
             return redirect('/login')
         else:
             if matchID == None:
                 return redirect('/lobby')
             else:
-                with open('static/ciphers.csv', mode='r') as file:
-                    csv_reader = csv.DictReader(file)
-                    ciphers = []
-                    for i in csv_reader:
-                        ciphers.append(i)
+                # Get match data or initialize new cryptogram for the match
+                match_data = R_Server.get(f'match:{matchID}:cryptogram')
+                
+                if match_data is None:
+                    # New match - generate cryptogram
+                    with open('static/ciphers.csv', mode='r') as file:
+                        csv_reader = csv.DictReader(file)
+                        ciphers = []
+                        for i in csv_reader:
+                            ciphers.append(i)
 
-                solvedCodes = json.loads(json.loads(R_Server.get(userID))['solvedCodes'])
+                    solvedCodes = json.loads(json.loads(R_Server.get(userID))['solvedCodes'])
 
-                newCiphers = []
-                for i in ciphers:
-                    if i['plaintext'] not in solvedCodes:
-                        newCiphers.append(i)
-                if len(newCiphers) == 0:
-                    return "You have completed all of our current ciphers. Wait for future updates to proceed." #Create j2 file with button to return to profile
+                    newCiphers = []
+                    for i in ciphers:
+                        if i['plaintext'] not in solvedCodes:
+                            newCiphers.append(i)
 
-                else: 
-                    keys=R_Server.get(userID+'pat1')
-                    if keys==None:
-                        randint = random.randint(0, len(newCiphers)-1)
-                        plaintext = newCiphers[randint]['plaintext']
-                        keyword = newCiphers[randint]['keyword']
-                        if newCiphers[randint]['cipherType'] == 'k2':
-                            isK2=True
-                        shift = random.randint(0, 25)
-                        currentCode = dict(
-                            {
-                                'plaintext': plaintext,
-                                'key': keyword, 
-                                'shift': shift,
-                                'isK2' : isK2
-                             })
-                        R_Server.set(userID+'pat1', json.dumps(currentCode))
-                    else:
-                        plaintext = json.loads(keys)['plaintext']
-                        keyword = json.loads(keys)['key']
-                        shift = json.loads(keys)['shift']
+                    if len(newCiphers) == 0:
+                        return "You have completed all of our current ciphers. Wait for future updates to proceed."
 
-                    if isK2:
-                        letters = list(codes.patristok2(plaintext, keyword, shift))
-                        frequency = codes.get_frequency(codes.patristok2(plaintext, keyword, shift))
-                    else:
-                        letters = list(codes.patristok1(plaintext, keyword, shift))
-                        frequency = codes.get_frequency(codes.patristok1(plaintext, keyword, shift))
-                    
-                    LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-                    freqDict = dict()
-                    for i in range(0, 26):
-                        freqDict[LETTERS[i]]=frequency[i]
+                    # Generate new cryptogram for the match
+                    randint = random.randint(0, len(newCiphers)-1)
+                    plaintext = newCiphers[randint]['plaintext']
+                    keyword = newCiphers[randint]['keyword']
+                    if newCiphers[randint]['cipherType'] == 'k2':
+                        isK2 = True
+                    shift = random.randint(0, 25)
 
-                    return render_template('cipherpage.j2', letters=letters, profile=json.loads(R_Server.get(userID)), route='/patristocrat', freqDict=freqDict, isK2=isK2)
+                    # Store match cryptogram data
+                    match_data = {
+                        'plaintext': plaintext,
+                        'key': keyword,
+                        'shift': shift,
+                        'isK2': isK2
+                    }
+                    R_Server.set(f'match:{matchID}:cryptogram', json.dumps(match_data))
+                else:
+                    # Load existing match data
+                    match_data = json.loads(match_data)
+                    plaintext = match_data['plaintext']
+                    keyword = match_data['key']
+                    shift = match_data['shift']
+                    isK2 = match_data['isK2']
+
+                # Generate the cryptogram
+                if isK2:
+                    letters = list(codes.patristok2(plaintext, keyword, shift))
+                    frequency = codes.get_frequency(codes.patristok2(plaintext, keyword, shift))
+                else:
+                    letters = list(codes.patristok1(plaintext, keyword, shift))
+                    frequency = codes.get_frequency(codes.patristok1(plaintext, keyword, shift))
+
+                LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+                freqDict = dict()
+                for i in range(0, 26):
+                    freqDict[LETTERS[i]] = frequency[i]
+
+                return render_template('cipherpage.j2', letters=letters, profile=json.loads(R_Server.get(userID)), route='/patristocrat', freqDict=freqDict, isK2=isK2, matchid=matchID)
    
     @blueprint.route('/patristocrat', methods=['PUT'])
     def putPat():
         userID = request.cookies.get('userid')
         matchID = request.cookies.get('matchid')
 
+        if userID is None or matchID is None:
+            return jsonify({'status': 'error', 'data': 'No user ID or match ID'})
+
         body = request.get_json()
         if 'action' not in body or 'data' not in body:
-            return jsonify({'status' : 'error', 'data' : 'incomplete data'})
+            return jsonify({'status': 'error', 'data': 'incomplete data'})
+        
         action = body.get('action')
 
         if action == 'connect':
-            currentCode = json.loads(R_Server.get(userID+'pat1'))
-            print(currentCode)
-            isK2 = currentCode['isK2']
+            # Get the match data
+            match_data = R_Server.get(f'match:{matchID}:cryptogram')
+            if match_data is None:
+                return jsonify({'status': 'error', 'data': 'match not found'})
+            
+            match_data = json.loads(match_data)
+            isK2 = match_data['isK2']
+            plaintext = match_data['plaintext']
+            keyword = match_data['key']
+            shift = match_data['shift']
+
+            # Generate cryptogram
             if isK2:
-                letters = list(codes.patristok2(currentCode['plaintext'], currentCode['key'], currentCode['shift']))
-                frequency = codes.get_frequency(codes.patristok2(currentCode['plaintext'], currentCode['key'], currentCode['shift']))
+                letters = list(codes.patristok2(plaintext, keyword, shift))
+                frequency = codes.get_frequency(codes.patristok2(plaintext, keyword, shift))
             else:
-                letters = list(codes.patristok1(currentCode['plaintext'], currentCode['key'], currentCode['shift']))
-                frequency = codes.get_frequency(codes.patristok1(currentCode['plaintext'], currentCode['key'], currentCode['shift']))
+                letters = list(codes.patristok1(plaintext, keyword, shift))
+                frequency = codes.get_frequency(codes.patristok1(plaintext, keyword, shift))
 
             LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
             freqDict = dict()
             for i in range(0, 26):
-                freqDict[LETTERS[i]]=frequency[i]
+                freqDict[LETTERS[i]] = frequency[i]
 
-            R_Server.publish(matchID, json.dumps({'event' : 'updateCode', 'letters' : letters, 'frequency' : freqDict, 'isK2' : isK2}))
-            return jsonify({'status' : 'success', 'data' : 'published server data'})
-        else:
-            return jsonify({'status' : 'error', 'data' : 'incomplete data'})
+            # Publish updates to all clients in the match
+            R_Server.publish(matchID, json.dumps({
+                'event': 'updateCode',
+                'letters': letters,
+                'frequency': freqDict,
+                'isK2': isK2
+            }))
+            
+            return jsonify({'status': 'success', 'data': 'published server data'})
+        
+        return jsonify({'status': 'error', 'data': 'invalid action'})
     
     @blueprint.route('/patristocrat-k1-solo')
     def soloPat():
@@ -494,70 +528,111 @@ def connect_routes(blueprint):
     
     @blueprint.route('/lobby')
     def joinOrCreateLobby():
+        # Check user authentication
         userid = request.cookies.get('userid')
+        if userid == None:
+            return redirect('/login')
+        
+        # Get list of all available matches
         matches = R_Server.get('matches')
         matchDict = dict()
         if matches:
             matchDict = json.loads(matches)
-
-        if userid == None:
-            return redirect('/login')
-        else:
-            return render_template('lobby.j2', values=list(matchDict.values()), keys=list(matchDict.keys()))
-        
+            # Filter out full lobbies (with 2 players)
+            matchDict = {k: v for k, v in matchDict.items() if len(v.get('players', [])) < 2}
+            
+        # Get username for display purposes
+        username = json.loads(R_Server.get(userid))['username']
+            
+        return render_template('lobby.j2', matches=matchDict, username=username)
+    
     @blueprint.route('/lobby', methods=['POST'])
     def lobbyDirect():
-        mode = request.form.get('mode')
-        userID = request.cookies.get('userid')
-        matches = R_Server.get('matches')
-
-        if userID == None:
+        # Check user authentication
+        userid = request.cookies.get('userid')
+        if userid == None:
             return redirect('/login')
-        else:
-            if mode == 'create':
-                matchID = str(uuid.uuid4())
-                if matches:
-                    matchDict = json.loads(matches)
-                    matchDict[userID]=matchID
-                    R_Server.set('matches', json.dumps(matchDict))
-                else:
-                    R_Server.set('matches', json.dumps({json.loads(R_Server.get(userID))['username']:matchID}))
 
-                resp = make_response(redirect('/patristocrat'))
-                resp.set_cookie('matchid', matchID)
-                return resp
-            if mode in list(json.loads(matches).values()):
-                matchID = mode
-                matchDict = json.loads(matches)
-                host = list(matchDict.keys())[list(matchDict.values()).index(matchID)]
-                del matchDict[host]
-                R_Server.set('matches', json.dumps(matchDict))
+        username = json.loads(R_Server.get(userid))['username']
+        
+        # Get or initialize matches dictionary
+        matches_raw = R_Server.get('matches') or b'{}'
+        matches = json.loads(matches_raw)
 
+        mode = request.form['mode']
+        
+        if mode == 'create':
+            # Create new lobby with a unique ID
+            new_id = str(uuid.uuid4())[:8]
+            matches[new_id] = {
+                'host': username,
+                'id': new_id,
+                'created_at': str(datetime.now()),
+                'players': [username]  # Initialize players list with host
+            }
+            R_Server.set('matches', json.dumps(matches))
+            
+            # Redirect to game with lobby cookie
+            resp = make_response(redirect('/patristocrat'))
+            resp.set_cookie('matchid', new_id)
+            return resp
+
+        elif mode == 'join':
+            # Get lobby ID from form
+            lobby_id = request.form.get('lobby_id')
+            if lobby_id in matches:
+                # Check if lobby is full
+                if len(matches[lobby_id]['players']) >= 2:
+                    flash("This lobby is full.", "error")
+                    return redirect('/lobby')
+                    
+                # Add player to the lobby
+                if username not in matches[lobby_id]['players']:
+                    matches[lobby_id]['players'].append(username)
+                    R_Server.set('matches', json.dumps(matches))
+                
+                # Set match cookie and redirect to game
                 resp = make_response(redirect('/patristocrat'))
-                resp.set_cookie('matchid', matchID)
+                resp.set_cookie('matchid', lobby_id)
                 return resp
-            else: 
-                return 'ERROR: Incomplete Data'
+            else:
+                flash("No such lobby exists.", "error")
+                return redirect('/lobby')
+
+        flash("Invalid action.", "error")
+        return redirect('/lobby')
+
+    # @blueprint.route('/stream')
+    # def multiStream():
+    #     if R_Server == None:
+    #         return "ERROR: Updates Not Available"
+
+    #     matchid = request.cookies.get('matchid')
+    #     if matchid == None:
+    #         return "ERROR: Game Does Not Exist"
+
+    #     def emitter():
+    #         if R_Server == None:
+    #             return 'data: Streaming Down\n\n'
+            
+    #         pubsub = R_Server.pubsub()
+    #         pubsub.subscribe(matchid)
+    #         for message in pubsub.listen():
+    #             data = message['data']
+    #             if type(data) == bytes:
+    #                 yield f'data: {data.decode()}\n\n'
+        
+    #     res = Response(emitter(), mimetype='text/event-stream')
+    #     return res
+
 
     @blueprint.route('/stream')
     def multiStream():
-        if R_Server == None:
-            return "ERROR: Updates Not Available"
-
-        matchid = request.cookies.get('matchid')
-        if matchid == None:
-            return "ERROR: Game Does Not Exist"
-
-        def emitter():
-            if R_Server == None:
-                return 'data: Streaming Down\n\n'
-            
-            pubsub = R_Server.pubsub()
-            pubsub.subscribe(matchid)
-            for message in pubsub.listen():
-                data = message['data']
-                if type(data) == bytes:
-                    yield f'data: {data.decode()}\n\n'
-        
-        res = Response(emitter(), mimetype='text/event-stream')
-        return res
+        def event_stream():
+            pub = R_Server.pubsub(ignore_subscribe_messages=True)
+            pub.subscribe(request.cookies.get('matchid'))
+            for msg in pub.listen():
+                if isinstance(msg['data'], bytes):
+                    yield f"data: {msg['data'].decode()}\n\n"
+        return Response(event_stream(),
+                        mimetype="text/event-stream")
