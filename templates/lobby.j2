@@ -8,13 +8,14 @@
     <!-- User info -->
     <div class="user-info">
       <p>Welcome, {{ username }}!</p>
-    </div>
-
-    <!-- CREATE -->
+    </div>    <!-- CREATE -->
     <div class="create-lobby">
       <h2>Create New Game</h2>
       <form action="/lobby" method="POST">
         <button name="mode" value="create">Create Lobby</button>
+      </form>
+      <form action="/lobby" method="POST">
+        <button name="mode" value="create_test">Create Test Lobby</button>
       </form>
     </div>
 

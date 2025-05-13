@@ -1,18 +1,20 @@
 <!DOCTYPE html>
 <html>
 <head>
-
+    <link rel="stylesheet" href="static/style.css">
     <link rel="stylesheet" href="static/cipher.css">
 </head>
 <body>
     <form id="profile" action="/profile/{{profile['username']}}" method="GET">
-        <div><input type="image" class="profile-button" id="avatar" src="/static/avatars/{{profile['avatar']}}"/> {{profile['username']}}</div>
+        <div>
+            <input type="image" id="avatar" src="/static/avatars/{{profile['avatar']}}"/>
+            <span style="color: white; font-size: 16px; margin-left: 10px;">{{profile['username']}}</span>
+        </div>
     </form>
 
     <form id="cipherselect" action="/cipherselection" method="POST">
-        <div><button name="mode" value="patristocrat" class="cipher-btn">Multiplayer Patristocrat</button>
-        <div><button name="mode" value="soloPat1">K1 Patristocrat(Solo)</button></div><button name="mode" value="soloPat2">K2 Patristocrat(Solo)</button></div>
+        <div><button name="mode" value="patristocrat" class="cipher-btn">Patristocrat</button><button name="mode" value="soloPat">Patristocrat(Solo)</button></div>
+        <div><button name="mode" value="aristocrat" class="cipher-btn">Aristocrat</button><button name="mode" value="soloAri">Aristocrat(Solo)</button></div>
     </form>
-
 </body>
 </html>

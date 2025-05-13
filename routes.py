@@ -5,6 +5,7 @@ import redis
 import json
 import uuid
 import os
+import time
 import database
 import csv
 import random
@@ -225,9 +226,20 @@ def connect_routes(blueprint):
         else:
             if matchID == None:
                 return redirect('/lobby')
-            else:
-                # Get match data or initialize new cryptogram for the match
+            else:                # Get match data or initialize new cryptogram for the match
                 match_data = R_Server.get(f'match:{matchID}:cryptogram')
+                matches = json.loads(R_Server.get('matches') or '{}')
+                
+                # Check if this is a test lobby
+                if matchID in matches and matches[matchID].get('is_test', False):
+                    # Use test cryptogram data
+                    match_data = json.dumps({
+                        'plaintext': 'TEST',
+                        'key': 'TEST',
+                        'shift': 0,  # Using shift 0 for simplicity
+                        'isK2': False
+                    })
+                    R_Server.set(f'match:{matchID}:cryptogram', match_data)
                 
                 if match_data is None:
                     # New match - generate cryptogram
@@ -561,18 +573,62 @@ def connect_routes(blueprint):
 
         mode = request.form['mode']
         
-        if mode == 'create':
+        if mode == 'create_test':
+            # Look for existing test lobby
+            existing_test_lobby = None
+            for mid, match in matches.items():
+                if match.get('is_test', False):
+                    existing_test_lobby = mid
+                    break
+
+            if existing_test_lobby:
+                # Join existing test lobby if not full
+                if len(matches[existing_test_lobby]['players']) < 2:
+                    if username not in matches[existing_test_lobby]['players']:
+                        matches[existing_test_lobby]['players'].append(username)
+                        R_Server.set('matches', json.dumps(matches))
+                    resp = make_response(redirect('/patristocrat'))
+                    resp.set_cookie('matchid', existing_test_lobby)
+                    return resp
+                else:
+                    flash("Test lobby is full", "error")
+                    return redirect('/lobby')
+
+            # Create new test lobby
+            new_id = str(uuid.uuid4())[:8]
+            matches[new_id] = {
+                'host': username,
+                'id': new_id,
+                'created_at': str(datetime.now()),
+                'players': [username],
+                'is_test': True
+            }
+            R_Server.set('matches', json.dumps(matches))
+            
+            # Set up test cryptogram data
+            test_data = {
+                'plaintext': 'TEST',
+                'key': 'TEST',
+                'shift': 0,
+                'isK2': False
+            }
+            R_Server.set(f'match:{new_id}:cryptogram', json.dumps(test_data))
+            
+            resp = make_response(redirect('/patristocrat'))
+            resp.set_cookie('matchid', new_id)
+            return resp
+            
+        elif mode == 'create':
             # Create new lobby with a unique ID
             new_id = str(uuid.uuid4())[:8]
             matches[new_id] = {
                 'host': username,
                 'id': new_id,
                 'created_at': str(datetime.now()),
-                'players': [username]  # Initialize players list with host
+                'players': [username]
             }
             R_Server.set('matches', json.dumps(matches))
             
-            # Redirect to game with lobby cookie
             resp = make_response(redirect('/patristocrat'))
             resp.set_cookie('matchid', new_id)
             return resp
@@ -591,7 +647,6 @@ def connect_routes(blueprint):
                     matches[lobby_id]['players'].append(username)
                     R_Server.set('matches', json.dumps(matches))
                 
-                # Set match cookie and redirect to game
                 resp = make_response(redirect('/patristocrat'))
                 resp.set_cookie('matchid', lobby_id)
                 return resp
@@ -602,29 +657,139 @@ def connect_routes(blueprint):
         flash("Invalid action.", "error")
         return redirect('/lobby')
 
-    # @blueprint.route('/stream')
-    # def multiStream():
-    #     if R_Server == None:
-    #         return "ERROR: Updates Not Available"
-
-    #     matchid = request.cookies.get('matchid')
-    #     if matchid == None:
-    #         return "ERROR: Game Does Not Exist"
-
-    #     def emitter():
-    #         if R_Server == None:
-    #             return 'data: Streaming Down\n\n'
-            
-    #         pubsub = R_Server.pubsub()
-    #         pubsub.subscribe(matchid)
-    #         for message in pubsub.listen():
-    #             data = message['data']
-    #             if type(data) == bytes:
-    #                 yield f'data: {data.decode()}\n\n'
+    @blueprint.route('/win')
+    def win_page():
+        userID = request.cookies.get('userid')
+        if userID is None:
+            return redirect('/login')
         
-    #     res = Response(emitter(), mimetype='text/event-stream')
-    #     return res
+        matchID = request.cookies.get('matchid')
+        if matchID is None:
+            return redirect('/lobby')
+            
+        # Get match completion data
+        completion_data = R_Server.get(f'match:{matchID}:completion')
+        if completion_data is None:
+            return redirect('/lobby')
+            
+        completion_data = json.loads(completion_data)
+        username = json.loads(R_Server.get(userID))['username']
+        
+        # Update user's profile with the win
+        profile = database.get_profile(username)
+        database.update_profile(username, wins=profile['wins'] + 1)
+        
+        return render_template('win.j2', 
+                             username=username,
+                             completion_time=completion_data['time'])
 
+    @blueprint.route('/loss')
+    def loss_page():
+        userID = request.cookies.get('userid')
+        if userID is None:
+            return redirect('/login')
+            
+        matchID = request.cookies.get('matchid')
+        if matchID is None:
+            return redirect('/lobby')
+            
+        # Get match completion data
+        completion_data = R_Server.get(f'match:{matchID}:completion')
+        if completion_data is None:
+            return redirect('/lobby')
+            
+        completion_data = json.loads(completion_data)
+        username = json.loads(R_Server.get(userID))['username']
+        
+        # Update user's profile with the loss
+        profile = database.get_profile(username)
+        database.update_profile(username, losses=profile['losses'] + 1)
+        
+        return render_template('loss.j2',
+                             username=username,
+                             winner_name=completion_data['winner'],
+                             winner_time=completion_data['time'])
+
+    @blueprint.route('/patristocrat', methods=['POST'])
+    def checkPatristocrat():
+        userID = request.cookies.get('userid')
+        matchID = request.cookies.get('matchid')
+        username = json.loads(R_Server.get(userID))['username']
+        
+        if userID is None or matchID is None:
+            return redirect('/login')
+            
+        # Get match data
+        match_data = R_Server.get(f'match:{matchID}:cryptogram')
+        if not match_data:
+            return redirect('/lobby')
+            
+        match_data = json.loads(match_data)
+        matches = json.loads(R_Server.get('matches') or '{}')
+        
+        # Get user input
+        input_letters = request.form
+        
+        # Special handling for test lobby
+        if matchID in matches and matches[matchID].get('is_test', False):
+            # For test lobby, check if ABCD maps to TEST
+            solution = ''
+            for letter in 'ABCD':  # The ciphertext letters that should map to TEST
+                if letter in input_letters:
+                    solution += input_letters[letter].upper()
+            
+            if solution == 'TEST':
+                # Record completion time
+                completion_time = time.time()
+                R_Server.set(f'match:{matchID}:completion', json.dumps({
+                    'winner': username,
+                    'time': completion_time
+                }))
+                
+                # Update match state
+                if 'winner' not in matches[matchID]:
+                    matches[matchID]['winner'] = username
+                    R_Server.set('matches', json.dumps(matches))
+                    return redirect('/win')
+                else:
+                    return redirect('/loss')
+            else:
+                flash("Incorrect Solution. Please try again.", 'check')
+                return redirect('/patristocrat')
+                
+        # Regular lobby logic remains the same
+        if match_data['isK2']:
+            letters = list(codes.patristok2(match_data['plaintext'], match_data['key'], match_data['shift']))
+        else:
+            letters = list(codes.patristok1(match_data['plaintext'], match_data['key'], match_data['shift']))
+            
+        cipherbet = codes.form_cipher(match_data['key'], match_data['shift'])
+        alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+        correct = True
+
+        for i in letters:
+            if i == ' ':
+                continue
+            index = cipherbet.index(i)
+            if input_letters.get(i) is None or input_letters.get(i).upper() != alphabet[index]:
+                correct = False
+                break
+
+        if correct:
+            # First player to solve wins
+            if 'winner' not in matches[matchID]:
+                matches[matchID]['winner'] = username
+                R_Server.set('matches', json.dumps(matches))
+                # Update user stats
+                database.update_profile(username, wins=1)
+                return redirect('/win')
+            else:
+                # Second player loses
+                database.update_profile(username, losses=1)
+                return redirect('/loss')
+        else:
+            flash("Incorrect Solution. Please try again.", 'check')
+            return redirect('/patristocrat')
 
     @blueprint.route('/stream')
     def multiStream():

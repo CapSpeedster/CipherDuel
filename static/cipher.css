@@ -1,34 +1,49 @@
-form{
-    position: absolute;
-    right: 50%;
+form#profile {
+    position: fixed;
+    left: 20px;
+    top: 20px;
+    z-index: 100;
 }
-form#profile{
-    position: absolute;
-    left:0.5%;
-    top: 0%;
-}
-form#cipherselect{
+
+form#cipherselect {
     position: absolute;
     top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    align-items: center;
 }
-form#code{
-    position: absolute;
-    right:0%;
-    width:100%;
+
+form#cipherselect div {
+    display: flex;
+    gap: 20px;
 }
-div#checks{
-    position: absolute;
-    top: 55%;
-    right: 50%;
+
+form#cipherselect button {
+    padding: 15px 30px;
+    font-size: 18px;
+    border: 2px solid white;
+    background-color: rgba(255, 255, 255, 0.1);
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
 }
+
+form#cipherselect button:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    transform: scale(1.05);
+}
+
 input#avatar {
-    position: relative;
-    top: 20px;
-    width:50px;
-    height:50px;
+    width: 50px;
+    height: 50px;
     border-radius: 50%;
     overflow: hidden;
     object-fit: cover;
+    border: 2px solid white;
 }
 
 

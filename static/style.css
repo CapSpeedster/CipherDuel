@@ -49,6 +49,17 @@ form {
 
     background-color: rgb(var(--color-selected));
 }
+form#profile {
+    min-width: auto;
+    min-height: auto;
+    border: none;
+    padding: 0;
+    background-color: transparent;
+    position: fixed;
+    left: 20px;
+    top: 20px;
+    z-index: 100;
+}
 form > input {
     align-self: start;
 }
@@ -82,6 +93,51 @@ img#avatar {
 }
 div#stats {
     font-size: 30px;
+}
+.result-container {
+    background-color: rgb(var(--color-selected));
+    padding: 2rem;
+    border-radius: 15px;
+    text-align: center;
+    max-width: 600px;
+    margin: 2rem auto;
+}
+
+.win-title {
+    color: #4CAF50;
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.loss-title {
+    color: #f44336;
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.stats {
+    margin: 2rem 0;
+    font-size: 1.5rem;
+    color: rgb(var(--color-fg));
+}
+
+.actions {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.actions button {
+    background-color: rgb(var(--color-bg));
+    color: rgb(var(--color-fg));
+    border: 2px solid rgb(var(--color-fg));
+    transition: all 0.3s ease;
+}
+
+.actions button:hover {
+    background-color: rgb(var(--color-fg));
+    color: rgb(var(--color-bg));
 }
 
 
