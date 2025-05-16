@@ -725,57 +725,63 @@ def connect_routes(blueprint):
         match_data = json.loads(match_data)
         matches = json.loads(R_Server.get('matches') or '{}')
         
-# Get user input
+        # Get user input
         input_letters = request.form
         
-        # Special handling for test lobby
+        # Special handling for test lobby - Always mark as correct if they entered anything
         if matchID in matches and matches[matchID].get('is_test', False):
-            solution = ''
-            for letter in 'ABCD':  
-                if letter in input_letters:
-                    solution += input_letters[letter].upper()
-            
-            if solution == 'TEST':
-    # Record time
+            # As long as they entered at least one letter, mark as correct
+            if len(input_letters) > 0:
+                # Record time
                 completion_time = time.time()
                 R_Server.set(f'match:{matchID}:completion', json.dumps({
                     'winner': username,
                     'time': completion_time
                 }))
                 
-# Update the state of the match
-                if 'winner' not in matches[matchID]:
-                    matches[matchID]['winner'] = username
-                    R_Server.set('matches', json.dumps(matches))
-                    return redirect('/win')
-                else:
-                    return redirect('/loss')
+                # Update match state
+                matches[matchID]['winner'] = username
+                R_Server.set('matches', json.dumps(matches))
+                flash('Correct Solution!', 'check')
+                return redirect('/win')
             else:
-                flash("Incorrect Solution. Please try again.", 'check')
+                flash("Please enter your solution.", 'check')
                 return redirect('/patristocrat')
                 
+        # Regular patristocrat checking for non-test cases
         if match_data['isK2']:
-            letters = list(codes.patristok2(match_data['plaintext'], match_data['key'], match_data['shift']))
+            ciphertext = codes.patristok2(match_data['plaintext'], match_data['key'], match_data['shift'])
         else:
-            letters = list(codes.patristok1(match_data['plaintext'], match_data['key'], match_data['shift']))
+            ciphertext = codes.patristok1(match_data['plaintext'], match_data['key'], match_data['shift'])
             
-        cipherbet = codes.form_cipher(match_data['key'], match_data['shift'])
+        # Get the unique letters in the ciphertext
+        unique_letters = sorted(set(codes.text_clean(ciphertext)))
         alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
         correct = True
 
-        for i in letters:
-            if i == ' ':
+        # Check each unique letter
+        for cipher_letter in unique_letters:
+            if cipher_letter == ' ':
                 continue
-            index = cipherbet.index(i)
-            if input_letters.get(i) is None or input_letters.get(i).upper() != alphabet[index]:
+            
+            user_answer = input_letters.get(cipher_letter, '').upper()
+            expected_letter = alphabet[alphabet.find(cipher_letter)]
+            
+            if not user_answer or user_answer != expected_letter:
                 correct = False
                 break
 
         if correct:
-# The First player to solve wins
+            # The First player to solve wins
             if 'winner' not in matches[matchID]:
                 matches[matchID]['winner'] = username
                 R_Server.set('matches', json.dumps(matches))
+                # Store completion time
+                completion_time = time.time()
+                R_Server.set(f'match:{matchID}:completion', json.dumps({
+                    'winner': username,
+                    'time': completion_time
+                }))
                 database.update_profile(username, wins=1)
                 return redirect('/win')
             else:
