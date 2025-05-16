@@ -180,7 +180,6 @@ def connect_routes(blueprint):
                 if pconfirm == None or pword == None:
                     return 'ERROR: Incomplete Data'
                 else: 
-                    #Authenticate username and password and updates database with new password
                     if database.db_auth_user(user, pconfirm):
                         profile=database.update_profile(user, password=pword)
                     else: 
@@ -226,7 +225,7 @@ def connect_routes(blueprint):
         else:
             if matchID == None:
                 return redirect('/lobby')
-            else:                # Get match data or initialize new cryptogram for the match
+            else:                
                 match_data = R_Server.get(f'match:{matchID}:cryptogram')
                 matches = json.loads(R_Server.get('matches') or '{}')
                 
@@ -693,7 +692,6 @@ def connect_routes(blueprint):
         if matchID is None:
             return redirect('/lobby')
             
-        # Get match completion data
         completion_data = R_Server.get(f'match:{matchID}:completion')
         if completion_data is None:
             return redirect('/lobby')
@@ -701,7 +699,7 @@ def connect_routes(blueprint):
         completion_data = json.loads(completion_data)
         username = json.loads(R_Server.get(userID))['username']
         
-        # Update user's profile with the loss
+        # Update profile with  loss
         profile = database.get_profile(username)
         database.update_profile(username, losses=profile['losses'] + 1)
         
@@ -727,26 +725,25 @@ def connect_routes(blueprint):
         match_data = json.loads(match_data)
         matches = json.loads(R_Server.get('matches') or '{}')
         
-        # Get user input
+# Get user input
         input_letters = request.form
         
         # Special handling for test lobby
         if matchID in matches and matches[matchID].get('is_test', False):
-            # For test lobby, check if ABCD maps to TEST
             solution = ''
-            for letter in 'ABCD':  # The ciphertext letters that should map to TEST
+            for letter in 'ABCD':  
                 if letter in input_letters:
                     solution += input_letters[letter].upper()
             
             if solution == 'TEST':
-                # Record completion time
+    # Record time
                 completion_time = time.time()
                 R_Server.set(f'match:{matchID}:completion', json.dumps({
                     'winner': username,
                     'time': completion_time
                 }))
                 
-                # Update match state
+# Update the state of the match
                 if 'winner' not in matches[matchID]:
                     matches[matchID]['winner'] = username
                     R_Server.set('matches', json.dumps(matches))
@@ -757,7 +754,6 @@ def connect_routes(blueprint):
                 flash("Incorrect Solution. Please try again.", 'check')
                 return redirect('/patristocrat')
                 
-        # Regular lobby logic remains the same
         if match_data['isK2']:
             letters = list(codes.patristok2(match_data['plaintext'], match_data['key'], match_data['shift']))
         else:
@@ -776,15 +772,13 @@ def connect_routes(blueprint):
                 break
 
         if correct:
-            # First player to solve wins
+# The First player to solve wins
             if 'winner' not in matches[matchID]:
                 matches[matchID]['winner'] = username
                 R_Server.set('matches', json.dumps(matches))
-                # Update user stats
                 database.update_profile(username, wins=1)
                 return redirect('/win')
             else:
-                # Second player loses
                 database.update_profile(username, losses=1)
                 return redirect('/loss')
         else:
