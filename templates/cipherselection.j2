@@ -1,18 +1,36 @@
 <!DOCTYPE html>
 <html>
 <head>
-
+    <link rel="stylesheet" href="static/style.css">
     <link rel="stylesheet" href="static/cipher.css">
 </head>
 <body>
+    <div id="navbar">
+        <ul id="navlist">
+            <li>
+                <div id="title">
+                    <button id="navbutton" onclick="location.href='/profile/{{profile['username']}}'">
+                        <img id="avatar" src="/static/avatars/{{profile['avatar']}}">
+                        <span>{{profile['username']}}'s Profile</span>
+                    </button>
+                </div>
+            </li>
+            <li>
+                <button id="navbutton" onclick="location.href='/cipherselection'">Ciphers</button>
+            </li>
+            <li><button onclick="location.href='/logout'">Log Out</button></li>
+        </ul>
+    </div>
     <form id="profile" action="/profile/{{profile['username']}}" method="GET">
-        <div><input type="image" class="profile-button" id="avatar" src="/static/avatars/{{profile['avatar']}}"/> {{profile['username']}}</div>
+        <div>
+            <input type="image" id="avatar" src="/static/avatars/{{profile['avatar']}}"/>
+            <span style="color: white; font-size: 16px; margin-left: 10px;">{{profile['username']}}</span>
+        </div>
     </form>
 
     <form id="cipherselect" action="/cipherselection" method="POST">
         <div><button name="mode" value="patristocrat" class="cipher-btn">Multiplayer Patristocrat</button>
         <div><button name="mode" value="soloPat1" class="cipher-btn">K1 Patristocrat(Solo)</button></div><button name="mode" value="soloPat2" class="cipher-btn">K2 Patristocrat(Solo)</button></div>
     </form>
-
 </body>
 </html>

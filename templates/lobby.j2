@@ -3,18 +3,27 @@
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
   </head>
   <body>
+    <div id="navbar">
+      <ul id="navlist">
+        <li>
+          <button id="navbutton" onclick="location.href='/cipherselection'">Ciphers</button>
+        </li>
+        <li><button onclick="location.href='/logout'">Log Out</button></li>
+      </ul>
+    </div>
     <h1>Cipher Duel Lobby</h1>
     
     <!-- User info -->
     <div class="user-info">
       <p>Welcome, {{ username }}!</p>
-    </div>
-
-    <!-- CREATE -->
+    </div>    <!-- CREATE -->
     <div class="create-lobby">
       <h2>Create New Game</h2>
       <form action="/lobby" method="POST">
         <button name="mode" value="create">Create Lobby</button>
+      </form>
+      <form action="/lobby" method="POST">
+        <button name="mode" value="create_test">Create Test Lobby</button>
       </form>
     </div>
 

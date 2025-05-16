@@ -1,0 +1,22 @@
+<html>
+    <head>
+        <link rel="stylesheet" type="text/css" href="/static/style.css"/>
+    </head>
+    <body>
+        <div class="result-container">
+            <h1 class="loss-title">Game Over</h1>
+            <div class="stats">
+                <p>Winner: {{ winner_name }}</p>
+                <p>Winner's time: {{ winner_time }} seconds</p>
+            </div>
+            <div class="actions">
+                <form action="/lobby">
+                    <button type="submit">Back to Lobby</button>
+                </form>
+                <form action="/profile/{{ username }}">
+                    <button type="submit">View Profile</button>
+                </form>
+            </div>
+        </div>
+    </body>
+</html>
