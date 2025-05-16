@@ -2,34 +2,131 @@
 <head>
     <link rel="stylesheet" type="text/css" href="/static/cipher.css"/>
     <style>
+        .cipher-container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
         .cipher-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(30px, 1fr));
-            gap: 5px;
+            grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+            gap: 10px;
             justify-items: center;
             max-width: 90%;
-            margin: auto;
+            margin: 2rem auto;
+            padding: 2rem;
+            background-color: rgb(248, 250, 252);
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
 
         .cipher-pair {
             display: flex;
             flex-direction: column;
             align-items: center;
+            gap: 8px;
         }
 
         .cipher-input {
-            width: 25px;
+            width: 35px;
+            height: 35px;
             text-align: center;
+            font-size: 1.2rem;
+            border: 2px solid rgb(41, 128, 185);
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .cipher-input:focus {
+            outline: none;
+            border-color: rgb(52, 152, 219);
+            box-shadow: 0 0 0 3px rgba(41, 128, 185, 0.2);
         }
 
         .cipher-letter {
             font-weight: bold;
-            margin-bottom: 2px;
+            font-size: 1.3rem;
+            color: rgb(41, 128, 185);
         }
 
         #checkbutton {
-            margin-top: 20px;
+            margin: 2rem auto;
             text-align: center;
+        }
+
+        #checkbutton button {
+            padding: 1rem 3rem;
+            font-size: 1.2rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            background-color: rgb(41, 128, 185);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(41, 128, 185, 0.2);
+        }
+
+        #checkbutton button:hover {
+            background-color: rgb(52, 152, 219);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(41, 128, 185, 0.3);
+        }
+
+        .lobby-code {
+            text-align: center;
+            font-size: 1.2rem;
+            color: rgb(75, 85, 99);
+            margin: 1rem 0;
+        }
+
+        .lobby-code strong {
+            color: rgb(41, 128, 185);
+            font-size: 1.4rem;
+        }
+
+        #checks {
+            text-align: center;
+            padding: 1rem;
+            margin: 1rem auto;
+            max-width: 600px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            font-size: 1.2rem;
+            color: rgb(41, 128, 185);
+        }
+
+        .frequency-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 1rem;
+            padding: 2rem;
+            margin: 2rem auto;
+            background-color: rgb(248, 250, 252);
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            max-width: 90%;
+        }
+
+        .freq-pair {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        .freq-info {
+            font-size: 1.1rem;
+            color: rgb(75, 85, 99);
+            min-width: 60px;
         }
     </style>
     <script>
@@ -126,39 +223,39 @@
     
     {% if matchid %}
     <p>Your lobby code: <strong>{{ matchid }}</strong></p>
-    {% endif %}
+    {% endif %}        
+            <div class="frequency-section">
+                {% if isK2 %}
+                    {% for i in freqDict %}
+                        <div class="freq-pair">
+                            <input class="cipher-input letter" name="{{ i }}" maxlength="1" oninput="updateText()" />
+                            <span class="freq-info">{{ i }}: {{ freqDict[i] }}</span>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    {% for i in freqDict %}
+                        <div class="freq-pair">
+                            <span class="freq-info">{{ i }}: {{ freqDict[i] }}</span>
+                            <input class="cipher-input letter" name="{{ i }}" maxlength="1" oninput="updateText()" />
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            </div>
 
-        <div>
-            {% if isK2 %}
-                {% for i in freqDict %}
-                    <input class="letter" name="{{ i }}" maxlength=1" size="1" oninput="updateText()" />
-                    {{ i }} {{ freqDict[i] }}
-                {% endfor %}
-            {% else %}
-                {% for i in freqDict %}
-                    {{ i }} {{ freqDict[i] }}
-                    <input class="letter" name="{{ i }}" maxlength="1" size="1" oninput="updateText()" />
-                {% endfor %}
-            {% endif %}
+            <div id="checkbutton">
+                <button type="submit">Check Solution</button>
+            </div>
+        </form>
+
+        <div id="checks">
+            {% with checks = get_flashed_messages(category_filter=["check"]) %}
+                {% if checks %}
+                    {% for msg in checks %}
+                        {{ msg }}
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
         </div>
-
-        <div id="checkbutton">
-            <button type="submit">Check</button>
-        </div>
-    </form>
-
-    <form id="cipherselect" action="/cipherselection">
-        <button type="submit">Back to Cipher Selection</button>
-    </form>
-
-    <div id="checks">
-        {% with checks = get_flashed_messages(category_filter=["check"]) %}
-            {% if checks %}
-                {% for msg in checks %}
-                    {{ msg }}
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
     </div>
 </body>
 </html>
