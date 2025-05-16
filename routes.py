@@ -787,8 +787,8 @@ def connect_routes(blueprint):
 
     @blueprint.route('/stream')
     def multiStream():
+        matchID = request.cookies.get('matchid')
         def event_stream():
-            matchID = request.cookies.get('matchid')
             pub = R_Server.pubsub(ignore_subscribe_messages=True)
             pub.subscribe(matchID)
             for msg in pub.listen():
