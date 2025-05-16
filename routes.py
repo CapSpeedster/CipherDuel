@@ -730,12 +730,28 @@ def connect_routes(blueprint):
         
         # Special handling for test lobby
         if matchID in matches and matches[matchID].get('is_test', False):
-            solution = ''
-            for letter in 'ABCD':  
-                if letter in input_letters:
-                    solution += input_letters[letter].upper()
+            print("Debug - Input letters received:", dict(input_letters))
             
-            if solution == 'TEST':
+            # Get the encrypted test word
+            encrypted = list(codes.patristok1('TEST', 'TEST', 0))
+            print("Debug - Encrypted test word:", encrypted)
+            
+            # Check each character against solution
+            solution_correct = True
+            expected_solution = {'T': 'T', 'E': 'E', 'S': 'S'}  # We map each encrypted letter to its solution
+            
+            for encrypted_char in encrypted:
+                if encrypted_char == ' ':
+                    continue
+                user_input = input_letters.get(encrypted_char, '').upper()
+                expected = expected_solution.get(encrypted_char)
+                print(f"Debug - Checking {encrypted_char}: user input={user_input}, expected={expected}")
+                
+                if not user_input or user_input != expected:
+                    solution_correct = False
+                    break
+            
+            if solution_correct:
     # Record time
                 completion_time = time.time()
                 R_Server.set(f'match:{matchID}:completion', json.dumps({
@@ -788,8 +804,9 @@ def connect_routes(blueprint):
     @blueprint.route('/stream')
     def multiStream():
         def event_stream():
+            matchID = request.cookies.get('matchid')
             pub = R_Server.pubsub(ignore_subscribe_messages=True)
-            pub.subscribe(request.cookies.get('matchid'))
+            pub.subscribe(matchID)
             for msg in pub.listen():
                 if isinstance(msg['data'], bytes):
                     yield f"data: {msg['data'].decode()}\n\n"

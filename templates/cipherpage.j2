@@ -109,8 +109,7 @@
         
     </script>
 </head>
-<body>
-    <form id="code" action="{{ route }}" method="POST">
+<body>    <form id="code" action="{{ route }}" method="POST">
         <div id='grid' class="cipher-grid">
             {% for i in letters %}
                 {% if i == ' ' %}
@@ -118,7 +117,7 @@
                 {% else %}
                     <div class="cipher-pair">
                         <div class="cipher-letter">{{ i }}</div>
-                        <input class="cipher-input letter" name="{{ i }}" maxlength="1" oninput="updateText()" required />
+                        <input class="cipher-input letter" name="{{ i }}" maxlength="1" oninput="updateText()" autocomplete="off" required />
                     </div>
                 {% endif %}
             {% endfor %}
