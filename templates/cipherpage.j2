@@ -131,7 +131,7 @@
         <div>
             {% if isK2 %}
                 {% for i in freqDict %}
-                    <input class="letter" name="{{ i }}" maxlength="1" size="1" oninput="updateText()" />
+                    <input class="letter" name="{{ i }}" maxlength=1" size="1" oninput="updateText()" />
                     {{ i }} {{ freqDict[i] }}
                 {% endfor %}
             {% else %}
