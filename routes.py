@@ -405,7 +405,7 @@ def connect_routes(blueprint):
                 for i in range(0, 26):
                     freqDict[LETTERS[i]]=frequency[i]
 
-                return render_template('cipherpage.j2', letters=letters, profile=json.loads(R_Server.get(userID)), route='/patristocrat-k1-solo', freqDict=freqDict, isK2=False)
+                return render_template('cipherpage2.j2', letters=letters, profile=json.loads(R_Server.get(userID)), route='/patristocrat-k1-solo', freqDict=freqDict, isK2=False)
     
     @blueprint.route("/patristocrat-k1-solo", methods=['POST'])
     def checkPat():
@@ -418,8 +418,8 @@ def connect_routes(blueprint):
         correct = True
 
         for i in list(codes.text_clean(codes.patristok1(keys['plaintext'], keys['key'], keys['shift']))):
-            index=cipherbet.index(i)
-            if inputLetters.get(i) == None or inputLetters.get(i)==alphabet[index]:
+            index=alphabet.index(i)
+            if inputLetters.get(i) == None or inputLetters.get(i)==cipherbet[index]:
                 continue
             else:
                 correct = False
@@ -487,7 +487,7 @@ def connect_routes(blueprint):
                 for i in range(0, 26):
                     freqDict[LETTERS[i]]=frequency[i]
 
-                return render_template('cipherpage.j2', letters=letters, profile=json.loads(R_Server.get(userID)), route='/patristocrat-k2-solo', freqDict=freqDict, isK2=True)
+                return render_template('cipherpage2.j2', letters=letters, profile=json.loads(R_Server.get(userID)), route='/patristocrat-k2-solo', freqDict=freqDict, isK2=True)
 
     @blueprint.route("/patristocrat-k2-solo", methods=['POST'])
     def checkPat2():
