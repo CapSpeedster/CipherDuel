@@ -1,0 +1,18 @@
+<html>
+    <head>
+        <link rel="stylesheet" type="text/css" href="/static/style.css"/>
+    </head>
+    <body>
+        <div class="result-container">
+            <h1 class="win-title">You Win!</h1>
+            <div class="actions">
+                <form action="/lobby">
+                    <button type="submit">Back to Lobby</button>
+                </form>
+                <form action="/profile/{{ username }}">
+                    <button type="submit">View Profile</button>
+                </form>
+            </div>
+        </div>
+    </body>
+</html>

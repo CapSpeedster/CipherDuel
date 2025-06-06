@@ -1,0 +1,10 @@
+<html>
+    <head>
+         <link rel="stylesheet" type="text/css" href="/static/style.css"/>
+    </head>
+    <body>
+        {% for n in names %}
+            <div id="white">{{n}} : <a href="http://127.0.0.1:8080/profile/{{n}}">127.0.0.1:8080/profile/{{n}}</a></div>
+        {% endfor %}
+    </body>
+</html>

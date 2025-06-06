@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="stylesheet" type="text/css" href="/static/style.css"/>
+        <script>
+            async function onDelButtonPress(){
+                let response = await fetch('', {
+                    method : 'DELETE',
+                    headers: {
+                        'Content-Type' : 'application/json'
+                    }
+                })
+            }
+        </script>
+    </head>
+    <body>
+        <div id="navbar">
+            <ul id="navlist">
+                <li>
+                    <div id="title">
+                        <img id="avatar" src="/static/avatars/{{profile['avatar']}}">
+                        <span>{{profile['username']}}'s Profile</span>
+                    </div>
+                </li>
+                <li>
+                    <button id="navbutton" onclick="location.href='/cipherselection'">Ciphers</button>
+                </li>
+                <li><button onclick="location.href='/logout'">Log Out</button></li>
+            </ul>
+        </div>
+
+        <div class="profile-content">
+            <div id="stats">
+                <span>Wins: {{profile['wins']}} </span>
+                <span>Losses: {{profile['losses']}}</span>
+            </div> 
+            <div id="stats">Best Solve Time: {{bestTime}} seconds</div>
+
+            {% if readonly == True %}
+                <div id="stats">Currently Logged In Account: {{cUser}}</div>
+            {% else %}
+                <form method="POST" action="/profile/{{profile['username']}}">
+                    <input name="pconfirm" type="password" placeholder="Confirm Password"/>
+                    <input name="newpword" type="password" placeholder="New Password"/>
+                    <button name="mode" type="submit" value="pword">Update Password</button>
+                </form>
+
+                {% with errors = get_flashed_messages(category_filter=["error"]) %}
+                    {% if errors %}
+                        {% for msg in errors%}
+                            <div class="error-message">{{msg}}</div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <form enctype="multipart/form-data" action="/profile/{{profile['username']}}" method="POST">
+                    <input name="avatar" type="file" accept="image/*"/>
+                    <button name="mode" value="avatar">Change Avatar</button>
+                </form>
+
+                <button class="danger-button" onclick="onDelButtonPress(); location.href = '/profile/{{profile['username']}}'">
+                    Delete Account
+                </button>
+            {% endif %}
+        </div>
+    </body>
+</html>
