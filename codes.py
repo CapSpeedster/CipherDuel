@@ -57,3 +57,35 @@ def get_frequency(text, LETTERS='ABCDEFGHIJKLMNOPQRSTUVWXYZ'):
         frequency.append(count)
     
     return frequency
+
+def nihilist(text, polykey, regkey, LETTERS='ABCDEFGHIKLMNOPQRSTUVWXYZ', replaced_letter='J', replacing_letter='I'):
+    text = text_clean(text)
+    polykey = text_clean(polykey)
+    regkey = text_clean(regkey)
+    replaced_letter = text_clean(replaced_letter)
+    replacing_letter = text_clean(replacing_letter)
+    text=text.replace(replaced_letter,replacing_letter)
+    polykey=polykey.replace(replaced_letter, replacing_letter)
+    regkey=regkey.replace(replaced_letter, replacing_letter)
+    keystring = form_cipher(polykey,0,LETTERS)
+    numVals = [11,12,13,14,15,21,22,23,24,25,31,32,33,34,35,41,42,43,44,45,51,52,53,54,55]
+    midtext=[]
+    key=[]
+    plaintext=[]
+
+    for i in text:
+        ciphertext_num = keystring.find(i)
+        midtext.append(numVals[ciphertext_num])
+    
+    print(midtext)
+    
+
+    for i in regkey:
+        ciphertext_num = keystring.find(i)
+        key.append(numVals[ciphertext_num])
+    
+    for i in range(len(text)):
+        plaintext.append(midtext[i]+key[i%len(key)])
+    
+    return plaintext
+    

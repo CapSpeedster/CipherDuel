@@ -14,4 +14,4 @@ routes.connect_routes(app)
 
 #Run app
 
-app.run(port=8080, debug=True, threaded=True)
+app.run(port=8080, debug=True, threaded=True, host="0.0.0.0")

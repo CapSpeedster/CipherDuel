@@ -33,8 +33,8 @@ form#code {
 
 div#checks {
     position: absolute;
-    top: 55%;
-    right: 50%;
+    top: 75%;
+    right: 5%;
     padding: 1rem;
     background-color: white;
     border-radius: 10px;

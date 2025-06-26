@@ -39,8 +39,6 @@ def connect_routes(blueprint):
 
     @blueprint.route("/form", methods=['GET', 'POST'])
     def postIndex():
-        print( request.args.get('user') )
-        print( request.form.get('user') )   
         return send_file('static/form.html')
 
 
@@ -70,10 +68,6 @@ def connect_routes(blueprint):
         username = request.form.get('username')
         password = request.form.get('password')
         mode = request.form.get('mode')
-
-        print(request.form.get('username'))
-        print(request.form.get('password'))
-        print('MODE:', str(request.form.get('mode')).upper())
 
         database.db_connect()
         
@@ -112,7 +106,6 @@ def connect_routes(blueprint):
         #Returns list of all usernames and respective profile pages in the database 
         userID = request.cookies.get('userid')
         names = database.get_all_usernames()
-        print(names)
         if userID == None:
             return redirect('/login')
         else:
@@ -389,7 +382,7 @@ def connect_routes(blueprint):
                     currentCode = dict(
                         {
                             'plaintext': plaintext,
-                            'key': keyword, 
+                            'key': codes.text_clean(keyword), 
                             'shift': shift
                          })
                     R_Server.set(userID+'pat1s', json.dumps(currentCode))
@@ -416,26 +409,38 @@ def connect_routes(blueprint):
         inputLetters = request.form
         alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
         correct = True
+        incorrectLetters = []
+        incorStr = ''
 
-        for i in list(codes.text_clean(codes.patristok1(keys['plaintext'], keys['key'], keys['shift']))):
+        for i in list(codes.text_clean(codes.patristok1(keys['plaintext'], keys['key'], keys['shift']))+'ABCDEFGHIJKLMNOPQRSTUVWXYZ'):
             index=alphabet.index(i)
-            if inputLetters.get(i) == None or inputLetters.get(i)==cipherbet[index]:
+            if  inputLetters.get(i)==cipherbet[index]:
                 continue
             else:
-                correct = False
-                break
+                if alphabet[index] not in incorrectLetters:
+                    incorrectLetters.append(alphabet[index])
+                
+                if codes.get_frequency(codes.text_clean(codes.patristok1(keys['plaintext'], keys['key'], keys['shift'])))[alphabet.index(i)]==0:
+                    continue
+                else:
+                    correct = False
+                
+
+        incorrectLetters.sort()
+        for i in incorrectLetters:
+            incorStr += i + ', '
         
         if correct:
             flash('Correct Solution!', 'check')
             R_Server.set(userID, json.dumps(database.correctCodes(username, keys['plaintext'])))
             R_Server.delete(userID+'pat1s')
         else:
-            flash("Incorrect Solution. Please try again.", 'check')
+            flash(f"Incorrect Solution. Please try again. The incorrect letters are {incorStr}", 'check')
 
         return redirect('/patristocrat-k1-solo')
 
     @blueprint.route("/patristocrat-k2-solo")
-    def soloAri():
+    def soloPat2():
         userID = request.cookies.get('userid')
         if userID == None:
             return redirect('/login')
@@ -493,28 +498,143 @@ def connect_routes(blueprint):
     def checkPat2():
         userID = request.cookies.get('userid')
         username = json.loads(R_Server.get(userID))['username']
-        keys = json.loads(R_Server.get(userID+'pat1s'))
+        keys = json.loads(R_Server.get(userID+'pat2s'))
         cipherbet=codes.form_cipher(keys['key'], int(keys['shift']))
         inputLetters = request.form
         alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
         correct = True
+        incorrectLetters = []
+        incorStr = ''
 
-        for i in list(codes.text_clean(codes.patristok1(keys['plaintext'], keys['key'], keys['shift']))):
-            index=cipherbet.index(i)
-            if inputLetters.get(i) == None or inputLetters.get(i)==alphabet[index]:
+        alphabetList = [x + '1' for x in list('ABCDEFGHIJKLMNOPQRSTUVWXYZ')]
+        for i in list(codes.text_clean(codes.patristok2(keys['plaintext'], keys['key'], keys['shift']))):
+            index=cipherbet.index(i[0])
+            if inputLetters.get(i)==alphabet[index]:
                 continue
             else:
-                correct = False
-                break
+                if cipherbet[index] not in incorrectLetters:
+                    incorrectLetters.append(cipherbet[index])
+                
+                if codes.get_frequency(codes.text_clean(codes.patristok2(keys['plaintext'], keys['key'], keys['shift'])))[cipherbet.index(i[0])]==0:
+                    continue
+                else:
+                    correct = False
+                
+
+        incorrectLetters.sort()
+        for i in incorrectLetters:
+            incorStr += i + ', '
         
         if correct:
             flash('Correct Solution!', 'check')
             R_Server.set(userID, json.dumps(database.correctCodes(username, keys['plaintext'])))
             R_Server.delete(userID+'pat2s')
         else:
-            flash("Incorrect Solution. Please try again.", 'check')
+            flash(f"Incorrect Solution. Please try again. The incorrect letters are {incorStr}", 'check')
 
         return redirect('/patristocrat-k2-solo')
+
+    @blueprint.route("/nihilist-criptanalysis-solo")
+    def nihilistCript():
+        userID = request.cookies.get('userid')
+        if userID == None:
+            return redirect('/login')
+        else:
+            with open('static/nihil_ciphers.csv', mode='r') as file:
+                csv_reader = csv.DictReader(file)
+                ciphers = []
+                for i in csv_reader:
+                    ciphers.append(i)
+            
+            nihilCiphers = []
+            for i in range(len(ciphers)):
+                if ciphers[i]['cipherType']=='nihilist':
+                    nihilCiphers.append(ciphers[i])
+
+            solvedCodes = json.loads(json.loads(R_Server.get(userID))['solvedCodes'])
+            
+            newCiphers = []
+            for i in nihilCiphers:
+                if i['plaintext'] not in solvedCodes:
+                    newCiphers.append(i)
+            
+            if len(newCiphers) == 0:
+                return "You have completed all of our current ciphers. Wait for future updates to proceed." #Create j2 file with button to return to profile
+
+            else: 
+                keys=R_Server.get(userID+'nihil')
+                if keys==None:
+                    randint = random.randint(0, len(newCiphers)-1)
+                    plaintext = newCiphers[randint]['plaintext']
+                    polykey = newCiphers[randint]['polykey']
+                    regkey = newCiphers[randint]['regkey']
+                    currentCode = dict(
+                        {
+                            'plaintext': plaintext,
+                            'polykey': polykey, 
+                            'regkey' : regkey
+                         })
+                    R_Server.set(userID+'nihil', json.dumps(currentCode))
+                else:
+                    plaintext = json.loads(keys)['plaintext']
+                    polykey = json.loads(keys)['polykey']
+                    regkey = json.loads(keys)['regkey']
+                numbers = codes.nihilist(plaintext, polykey, regkey)
+                numVals = [11,12,13,14,15,21,22,23,24,25,31,32,33,34,35,41,42,43,44,45,51,52,53,54,55]
+                hint = list(codes.text_clean(plaintext)[:(len(regkey)+2)])
+
+                return render_template('cipherpage3.j2', numbers=numbers, numLen=len(numbers), profile=json.loads(R_Server.get(userID)), numVals=numVals, hint=hint, hintLen=len(hint), route='/nihilist-criptanalysis-solo')
+            
+    '''
+    get GPT to make nihilist_ciphers.csv file
+    create cipherpage3.j2 file
+    do nihilist post route
+    '''
+
+    @blueprint.route('/nihilist-criptanalysis-solo', methods=['POST'])
+    def checkNihilist():
+        userID = request.cookies.get('userid')
+        username = json.loads(R_Server.get(userID))['username']
+        keys = json.loads(R_Server.get(userID+'nihil'))
+        inputLetters = request.form
+        alphabet = 'ABCDEFGHIKLMNOPQRSTUVWXYZ'
+        correct = True
+        incorrectLetters = []
+        incorStr = ''
+        plaintext = list(codes.text_clean(keys['plaintext']).replace('J','I'))
+        numVals = [11,12,13,14,15,21,22,23,24,25,31,32,33,34,35,41,42,43,44,45,51,52,53,54,55]
+        regkey=[]
+        cipher = list(codes.nihilist(keys['plaintext'], keys['polykey'], keys['regkey']))
+        
+        cipherbet = codes.form_cipher(codes.text_clean(keys['polykey']).replace('J','I'),0,alphabet)
+        for i in codes.text_clean(keys['regkey']).replace('J','I'):
+            ciphertext_num = cipherbet.find(i)
+            regkey.append(numVals[ciphertext_num])
+        print(inputLetters)
+
+        for i in range(len(cipher)):
+            index = numVals.index(cipher[i]-regkey[i%len(regkey)])
+            if inputLetters.get(str(cipher[i]-regkey[i%len(regkey)]))==cipherbet[index]:
+                continue
+            else:
+                if cipherbet[index] not in incorrectLetters:
+                    incorrectLetters.append(cipherbet[index])
+                else:
+                    correct = False
+                
+
+        incorrectLetters.sort()
+        for i in incorrectLetters:
+            incorStr += i + ', '
+        
+        if correct:
+            flash('Correct Solution!', 'check')
+            R_Server.set(userID, json.dumps(database.correctCodes(username, keys['plaintext'])))
+            R_Server.delete(userID+'nihil')
+        else:
+            flash(f"Incorrect Solution. Please try again. The incorrect letters are {incorStr}", 'check')
+
+        return redirect('/nihilist-criptanalysis-solo')
 
     @blueprint.route("/cipherselection")
     def gCode():

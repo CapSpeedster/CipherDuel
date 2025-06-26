@@ -81,9 +81,9 @@
         .cipher-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
-            gap: 10px;
+            gap: 20px;
             justify-items: center;
-            max-width: 90%;
+            max-width: 80%;
             margin: 2rem auto;
             padding: 2rem;
             background-color: rgb(248, 250, 252);
@@ -99,6 +99,16 @@
         }
 
         .cipher-input {
+            width: 50px;
+            height: 35px;
+            text-align: center;
+            font-size: 1.2rem;
+            border: 2px solid rgb(41, 128, 185);
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .polybius-input {
             width: 35px;
             height: 35px;
             text-align: center;
@@ -114,7 +124,19 @@
             box-shadow: 0 0 0 3px rgba(41, 128, 185, 0.2);
         }
 
+        .polybius-input:focus {
+            outline: none;
+            border-color: rgb(52, 152, 219);
+            box-shadow: 0 0 0 3px rgba(41, 128, 185, 0.2);
+        }
+
         .cipher-letter {
+            font-weight: bold;
+            font-size: 1.3rem;
+            color: rgb(41, 128, 185);
+        }
+
+        .polybius-letter {
             font-weight: bold;
             font-size: 1.3rem;
             color: rgb(41, 128, 185);
@@ -194,76 +216,89 @@
             color: rgb(75, 85, 99);
             min-width: 60px;
         }
+        .grid-container {
+          display: grid;
+          grid-template-columns: repeat(5, 1fr); /* 5 columns */
+          gap: 10px; /* Space between inputs */
+          max-width: 300px; /* Optional: Adjust width */
+          margin: auto; /* Center the grid */
+        }
+
+        #table {
+            display:flex;
+        }
     </style>
     <script>
-        function updateTextK1() {
-            let val = event.target.value;
-            let name = event.target.name;
-            let sameBoxes = document.getElementsByName(name);
-            for (let i = 0; i < sameBoxes.length; i++) {
-                sameBoxes[i].value = val.toUpperCase();
+
+        function updateNihilist() {
+            let cipherDiv = document.getElementsByClassName('cipher-letter');
+            let inputDiv = document.getElementsByClassName('cipher-input number');
+            let subtractedDiv = document.getElementsByClassName('subtracted-number');
+            let letterDiv = document.getElementsByClassName('cipher-input letter')
+            let subtractedNumber = '-';
+            let numVals = [11,12,13,14,15,21,22,23,24,25,31,32,33,34,35,41,42,43,44,45,51,52,53,54,55];
+            for (let i=0; i<inputDiv.length; i++){
+                if (inputDiv[i].value != '' && numVals.includes(parseInt(inputDiv[i].value))) {
+                    let fNum = parseInt(inputDiv[i].value);
+                    let sNum = parseInt(cipherDiv[i].innerText);
+                    tNum = (sNum-fNum).toString();
+                    subtractedDiv[i].innerText = tNum;
+                    letterDiv[i].name = tNum;
+                    updatePolybius(letterDiv[i]);
+                }
+                else{
+                    subtractedDiv[i].innerText='-';
+                    letterDiv[i].name = '-';
+                    updatePolybius(letterDiv[i]);
+                }
             }
         }
 
-        function updateTextK2() {
-            let val = event.target.value;
-            event.target.value = val.toUpperCase();
-            let name = event.target.name;
-            if (val == ''){
-                if (name.length == 1){
-                    let freqDivs = document.getElementsByClassName('freq-pair');
-                    let sameBoxes = document.getElementsByName(name);
-                    for (let i = 0; i < sameBoxes.length; i++) {
-                        sameBoxes[i].value = val.toUpperCase();
-                    }
-                    for (let i = 0; i < freqDivs.length; i++){
-                        if (freqDivs[i].querySelector('input').value == name){
-                            freqDivs[i].querySelector('input').value = ''
-                        }
+        function updatePolybius(target){
+            let name = target.name;
+            let polyInput = document.querySelector('.polybius-input[name="' + name + '"]');
+            let val = '';
+            let numVals = [11,12,13,14,15,21,22,23,24,25,31,32,33,34,35,41,42,43,44,45,51,52,53,54,55];
+            if (polyInput != null){
+                if (polyInput.value != ''){
+                    val = polyInput.value.toUpperCase();
+                    if (!target.disabled){
+                        target.value = val.toUpperCase();
                     }
                 }
-                if (name.length == 2){
-                    name = name.substring(0,1)
-                    let cipherDivs = document.getElementsByClassName('cipher-pair');
-                    let sameBoxes = document.getElementsByName(val.toUpperCase());
-                    for (let i = 0; i < sameBoxes.length; i++) {
+                else {
+                    val = target.value;
+                    target.value = val.toUpperCase();
+                }
+            }
+            else{
+                val = target.value;
+                target.value = val.toUpperCase(); 
+            }
+            if (name != '-' && numVals.includes(parseInt(name))) {
+                let subtractedDiv = document.getElementsByClassName('subtracted-number');
+                let sameBoxes = document.getElementsByName(name);
+                for (let i = 0; i<sameBoxes.length; i++){
+                    if (!sameBoxes[i].disabled){
                         sameBoxes[i].value = val.toUpperCase();
-                    }
-                    for (let i = 0; i < cipherDivs.length; i++){
-                        if (cipherDivs[i].querySelector('input').value == name){
-                            cipherDivs[i].querySelector('input').value = ''
-                        }
                     }
                 }
             }
-            else {
-                if (name.length == 1) {
-                    let sameBoxes = document.getElementsByName(name);
-                    let freqBox = document.getElementsByName(val.toUpperCase()+"1");
-                    freqBox[0].value = name.toUpperCase();
-                    for (let i = 0; i < sameBoxes.length; i++) {
-                        sameBoxes[i].value = val.toUpperCase();
-                    }
-                } 
-                if (name.length == 2) {
-                    name = name.substring(0,1)
-                    let sameBoxes = document.getElementsByName(val.toUpperCase());
-                    for (let i = 0; i < sameBoxes.length; i++) {
-                        sameBoxes[i].value = name.toUpperCase();
-                    }
-                }
-            }
+
         }
+
+        /*
+        document.getElementById('code').addEventListener('submit', function () {
+            console.log('hi')
+            table = document.getElementById('polybius-table');
+            tableInputs = table.querySelectorAll('input');
+            for (let i = 0; i < tableInputs.lenght; i++){
+                tableInputs[i].disabled = true;
+            }
+        })
+        */
 
         window.onbeforeunload = function() {
-            localStorage.clear();
-
-            let cipherInputs = document.getElementsByClassName('cipher-input letter');
-            for (let i = 0; i<cipherInputs.length; i++){
-                if (localStorage.getItem(cipherInputs[i].name) == null){
-                    localStorage.setItem(cipherInputs[i].name, cipherInputs[i].value);
-                }
-            }
             
         }
 
@@ -278,12 +313,6 @@
                 checks.style.display = 'none';
             }, 10000);
 
-            let cipherInputs = document.getElementsByClassName('cipher-input letter');
-            for (let i = 0; i<cipherInputs.length; i++){
-                if (localStorage.getItem(cipherInputs[i].name) != null){
-                    cipherInputs[i].value = localStorage.getItem(cipherInputs[i].name);
-                }
-            }
         }
 
 
@@ -307,54 +336,41 @@
                 <li><button onclick="location.href='/logout'">Log Out</button></li>
             </ul>
         </div>
-    <form id="code" action="{{ route }}" method="POST">
-        <div id='grid' class="cipher-grid">
-            {% if isK2 %}
-                {% for i in letters %}
-                    {% if i == ' ' %}
-                        <div style="width: 30px;"></div>
-                    {% else %}
-                        <div class="cipher-pair">
-                            <div class="cipher-letter">{{ i }}</div>
-                            <input class="cipher-input letter" name="{{ i }}" maxlength="1" oninput="updateTextK2()" />
-                        </div>
-                    {% endif %}
-                {% endfor %}
-            {% else %}
-                {% for i in letters %}
-                    {% if i == ' ' %}
-                        <div style="width: 30px;"></div>
-                    {% else %}
-                        <div class="cipher-pair">
-                            <div class="cipher-letter">{{ i }}</div>
-                            <input type="text" class="cipher-input letter" name="{{ i }}" maxlength="1" oninput="updateTextK1()" />
-                        </div>
-                    {% endif %}
-                {% endfor %}
-            {% endif %}
-        </div>  
-            <div class="frequency-section">
-                {% if isK2 %}
-                    {% for i in freqDict %}
-                        <div class="freq-pair" id="freq">
-                            <input type="text" class="cipher-input letter" name="{{ i }}1" maxlength="1" oninput="updateTextK2()" />
-                            <span class="freq-info">{{ i }}: {{ freqDict[i] }}</span>
-                        </div>
-                    {% endfor %}
-                {% else %}
-                    {% for i in freqDict %}
-                        <div class="freq-pair">
-                            <span class="freq-info">{{ i }}: {{ freqDict[i] }}</span>
-                            <input type="text" class="cipher-input letter" name="{{ i }}" maxlength="1" oninput="updateTextK1()" />
-                        </div>
-                    {% endfor %}
-                {% endif %}
-            </div>
 
-            <div id="checkbutton">
-                <button type="submit">Check Solution</button>
+    <form id="code" action="{{ route }}" method="POST">
+        <div id="table">
+            <div id='grid' class="cipher-grid">
+                    {% for i in range(numLen) %}
+                        {% if i == ' ' %}
+                            <div style="width: 30px;"></div>
+                        {% else %}
+                            <div class="cipher-pair">
+                                <div class="cipher-letter">{{ numbers[i] }}</div>
+                                <input type="number" class="cipher-input number" maxlength="3" oninput="updateNihilist()" />
+                                <div class="subtracted-number">-</div>
+                                {% if i < hintLen %}
+                                    <input type="text" class="cipher-input letter" name="-" maxlength="1" value="{{hint[i]}}" disabled />
+                                {% else %}
+                                    <input type="text" class="cipher-input letter" name="-" maxlength="1" oninput="updatePolybius(this)" />
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
             </div>
-        </form>
+            <div class="grid-container">
+                {% for i in numVals %}
+                    <div id="polybius-table" class="cipher-pair">
+                        <div class="polybius-letter">{{ i }}</div>
+                        <input type="text" class="polybius-input letter" name="{{ i }}" maxlength="1" oninput="updatePolybius(this)"/>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div id="checkbutton">
+            <button type="submit">Check Solution</button>
+        </div>
+    </form>
 
         <div id="checks">
             {% with checks = get_flashed_messages(category_filter=["check"]) %}
