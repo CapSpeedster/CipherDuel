@@ -419,6 +419,7 @@ def connect_routes(blueprint):
             else:
                 if alphabet[index] not in incorrectLetters:
                     incorrectLetters.append(alphabet[index])
+                    correct = False
                 
                 if codes.get_frequency(codes.text_clean(codes.patristok1(keys['plaintext'], keys['key'], keys['shift'])))[alphabet.index(i)]==0:
                     continue
@@ -513,6 +514,7 @@ def connect_routes(blueprint):
                 continue
             else:
                 if cipherbet[index] not in incorrectLetters:
+                    correct = False
                     incorrectLetters.append(cipherbet[index])
                 
                 if codes.get_frequency(codes.text_clean(codes.patristok2(keys['plaintext'], keys['key'], keys['shift'])))[cipherbet.index(i[0])]==0:
@@ -581,15 +583,10 @@ def connect_routes(blueprint):
                     regkey = json.loads(keys)['regkey']
                 numbers = codes.nihilist(plaintext, polykey, regkey)
                 numVals = [11,12,13,14,15,21,22,23,24,25,31,32,33,34,35,41,42,43,44,45,51,52,53,54,55]
-                hint = list(codes.text_clean(plaintext)[:(len(regkey)+2)])
+                hint = list(codes.text_clean(plaintext)[:6])
 
-                return render_template('cipherpage3.j2', numbers=numbers, numLen=len(numbers), profile=json.loads(R_Server.get(userID)), numVals=numVals, hint=hint, hintLen=len(hint), route='/nihilist-criptanalysis-solo')
+                return render_template('cipherpage3.j2', numbers=numbers, numLen=len(numbers), profile=json.loads(R_Server.get(userID)), numVals=numVals, hint=hint, route='/nihilist-criptanalysis-solo')
             
-    '''
-    get GPT to make nihilist_ciphers.csv file
-    create cipherpage3.j2 file
-    do nihilist post route
-    '''
 
     @blueprint.route('/nihilist-criptanalysis-solo', methods=['POST'])
     def checkNihilist():
@@ -599,9 +596,6 @@ def connect_routes(blueprint):
         inputLetters = request.form
         alphabet = 'ABCDEFGHIKLMNOPQRSTUVWXYZ'
         correct = True
-        incorrectLetters = []
-        incorStr = ''
-        plaintext = list(codes.text_clean(keys['plaintext']).replace('J','I'))
         numVals = [11,12,13,14,15,21,22,23,24,25,31,32,33,34,35,41,42,43,44,45,51,52,53,54,55]
         regkey=[]
         cipher = list(codes.nihilist(keys['plaintext'], keys['polykey'], keys['regkey']))
@@ -610,29 +604,23 @@ def connect_routes(blueprint):
         for i in codes.text_clean(keys['regkey']).replace('J','I'):
             ciphertext_num = cipherbet.find(i)
             regkey.append(numVals[ciphertext_num])
-        print(inputLetters)
 
-        for i in range(len(cipher)):
-            index = numVals.index(cipher[i]-regkey[i%len(regkey)])
-            if inputLetters.get(str(cipher[i]-regkey[i%len(regkey)]))==cipherbet[index]:
-                continue
-            else:
-                if cipherbet[index] not in incorrectLetters:
-                    incorrectLetters.append(cipherbet[index])
+        if inputLetters.get('-') or inputLetters.get('-')=='':
+            correct = False
+        else:
+            for i in range(len(cipher)):
+                index = numVals.index(cipher[i]-regkey[i%len(regkey)])
+                if inputLetters.get(str(cipher[i]-regkey[i%len(regkey)]))==cipherbet[index]:
+                    continue
                 else:
                     correct = False
-                
-
-        incorrectLetters.sort()
-        for i in incorrectLetters:
-            incorStr += i + ', '
         
         if correct:
             flash('Correct Solution!', 'check')
             R_Server.set(userID, json.dumps(database.correctCodes(username, keys['plaintext'])))
             R_Server.delete(userID+'nihil')
         else:
-            flash(f"Incorrect Solution. Please try again. The incorrect letters are {incorStr}", 'check')
+            flash(f"Incorrect Solution. Please try again.", 'check')
 
         return redirect('/nihilist-criptanalysis-solo')
 
@@ -654,6 +642,8 @@ def connect_routes(blueprint):
             return redirect('/patristocrat-k1-solo')
         elif mode == 'soloPat2':
             return redirect('/patristocrat-k2-solo')
+        elif mode == 'nihilist':
+            return redirect('/nihilist-criptanalysis-solo')
         else:
             return 'ERROR: Incorrect Data'    
     

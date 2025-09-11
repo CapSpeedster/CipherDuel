@@ -76,9 +76,6 @@ def nihilist(text, polykey, regkey, LETTERS='ABCDEFGHIKLMNOPQRSTUVWXYZ', replace
     for i in text:
         ciphertext_num = keystring.find(i)
         midtext.append(numVals[ciphertext_num])
-    
-    print(midtext)
-    
 
     for i in regkey:
         ciphertext_num = keystring.find(i)

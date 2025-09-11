@@ -229,6 +229,29 @@
         }
     </style>
     <script>
+        let startTime = Date.now();
+
+        function updateElapsedTime() {
+            let username = document.getElementById('user').textContent;
+            let cipherNumbers = document.getElementsByClassName('cipher-letter');
+            let cipherInputs = document.getElementsByClassName('cipher-input letter');
+            let itemString = 'time-'+username;
+            for (let i = 0; i<6; i++){
+                itemString+=cipherInputs[i].value;
+                itemString+=cipherNumbers[i].innerText;
+            }
+            let currentTime = Date.now();
+            let elapsedTime=0;
+            if (localStorage.getItem(itemString) != null){
+                elapsedTime = Math.floor((currentTime - startTime) / 1000) + parseInt(localStorage.getItem(itemString)); 
+            }
+            else {
+                elapsedTime = Math.floor((currentTime - startTime) / 1000); 
+            }
+            document.getElementById('time-elapsed').textContent = elapsedTime;
+        }
+
+        setInterval(updateElapsedTime, 1000);
 
         function updateNihilist() {
             let cipherDiv = document.getElementsByClassName('cipher-letter');
@@ -287,25 +310,57 @@
 
         }
 
-        /*
-        document.getElementById('code').addEventListener('submit', function () {
-            console.log('hi')
-            table = document.getElementById('polybius-table');
-            tableInputs = table.querySelectorAll('input');
-            for (let i = 0; i < tableInputs.lenght; i++){
-                tableInputs[i].disabled = true;
-            }
-        })
-        */
-
         window.onbeforeunload = function() {
-            
+            let cipherInputs = document.getElementsByClassName('cipher-input letter');
+            //for (let i = 6; i<cipherInputs.length; i++){
+            //    if (localStorage.getItem(cipherInputs[i].id) == null){
+            //        localStorage.setItem(cipherInputs[i].id, cipherInputs[i].value);
+            //    }
+            //}
+
+            let numberInputs = document.getElementsByClassName('cipher-input number');
+            //for (let i = 0; i<numberInputs.length; i++){
+            //    if (localStorage.getItem(numberInputs[i].id) == null){
+            //        localStorage.setItem(numberInputs[i].id, numberInputs[i].value);
+            //    }
+            //}
+
+            let polybiusInputs = document.getElementsByClassName('polybius-input letter');
+            //for (let i = 0; i<polybiusInputs.length; i++){
+            //    if (localStorage.getItem(polybiusInputs[i].name + 'poly') == null){
+            //        localStorage.setItem(polybiusInputs[i].name + 'poly', polybiusInputs[i].value);
+            //    }
+            //}
+
+            let username = document.getElementById('user').textContent;
+            let time = document.getElementById('time-elapsed').textContent
+            let cipherNumbers = document.getElementsByClassName('cipher-letter');
+            let itemString = 'time-'+username;
+            for (let i = 0; i<6; i++){
+                itemString+=cipherInputs[i].value;
+                itemString+=cipherNumbers[i].innerText;
+            }
+
+            localStorage.removeItem(itemString);
+            localStorage.setItem(itemString, time)
         }
+
+        
 
         window.onload = function() {
             let popup = document.getElementById('checks')
             if (popup.innerText == 'Correct Solution!'){
-                localStorage.clear();
+                let username = document.getElementById('user').textContent;
+                let time = document.getElementById('time-elapsed').textContent
+                let cipherNumbers = document.getElementsByClassName('cipher-letter');
+                let cipherInputs = document.getElementsByClassName('cipher-input letter');
+                let itemString = 'time-'+username;
+                for (let i = 0; i<6; i++){
+                    itemString+=cipherInputs[i].value;
+                    itemString+=cipherNumbers[i].innerText;
+                }
+    
+                localStorage.removeItem(itemString);
             }
 
             setTimeout(() => {
@@ -313,6 +368,28 @@
                 checks.style.display = 'none';
             }, 10000);
 
+            let polybiusInputs = document.getElementsByClassName('polybius-input letter');
+            //for (let i = 0; i<polybiusInputs.length; i++){
+            //    if (localStorage.getItem(polybiusInputs[i].name + 'poly') != null){
+            //        polybiusInputs[i].value = localStorage.getItem(polybiusInputs[i].name + 'poly');
+            //    }
+            //}
+
+            let cipherInputs = document.getElementsByClassName('cipher-input letter');
+            //for (let i = 0; i<cipherInputs.length; i++){
+            //    if (localStorage.getItem(cipherInputs[i].id) != null){
+            //        cipherInputs[i].value = localStorage.getItem(cipherInputs[i].id);
+            //    }
+            //}
+
+            let numberInputs = document.getElementsByClassName('cipher-input number');
+            //for (let i = 0; i<numberInputs.length; i++){
+            //    if (localStorage.getItem(numberInputs[i].id) != null){
+            //        numberInputs[i].value = localStorage.getItem(numberInputs[i].id);
+            //    }
+            //}
+
+            updateNihilist();
         }
 
 
@@ -326,7 +403,7 @@
                     <div id="title">
                         <button id="navbutton" onclick="location.href='/profile/{{profile['username']}}'">
                             <img id="avatar" src="/static/avatars/{{profile['avatar']}}">
-                            <span>{{profile['username']}}'s Profile</span>
+                            <span id="user">{{profile['username']}}'s Profile</span>
                         </button>
                     </div>
                 </li>
@@ -346,12 +423,12 @@
                         {% else %}
                             <div class="cipher-pair">
                                 <div class="cipher-letter">{{ numbers[i] }}</div>
-                                <input type="number" class="cipher-input number" maxlength="3" oninput="updateNihilist()" />
+                                <input type="number" id="#{{i}}" class="cipher-input number" maxlength="2" oninput="updateNihilist()" />
                                 <div class="subtracted-number">-</div>
-                                {% if i < hintLen %}
-                                    <input type="text" class="cipher-input letter" name="-" maxlength="1" value="{{hint[i]}}" disabled />
+                                {% if i < 6 %}
+                                    <input id="{{i}}" type="text" class="cipher-input letter" name="-" maxlength="1" value="{{hint[i]}}" disabled />
                                 {% else %}
-                                    <input type="text" class="cipher-input letter" name="-" maxlength="1" oninput="updatePolybius(this)" />
+                                    <input id="{{i}}" type="text" class="cipher-input letter" name="-" maxlength="1" oninput="updatePolybius(this)" />
                                 {% endif %}
                             </div>
                         {% endif %}
@@ -368,6 +445,7 @@
         </div>
 
         <div id="checkbutton">
+            <div>Time: <p id="time-elapsed">0</p></div>
             <button type="submit">Check Solution</button>
         </div>
     </form>

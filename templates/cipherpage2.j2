@@ -196,6 +196,28 @@
         }
     </style>
     <script>
+        let startTime = Date.now();
+
+        function updateElapsedTime() {
+            let username = document.getElementById('user').textContent;
+            let cipherNumbers = document.getElementsByClassName('cipher-letter');
+            let itemString = 'time-'+username;
+            for (let i = 0; i<17; i++){
+                itemString+=cipherNumbers[i].innerText;
+            }
+            let currentTime = Date.now();
+            let elapsedTime=0;
+            if (localStorage.getItem(itemString) != null){
+                elapsedTime = Math.floor((currentTime - startTime) / 1000) + parseInt(localStorage.getItem(itemString)); 
+            }
+            else {
+                elapsedTime = Math.floor((currentTime - startTime) / 1000); 
+            }
+            document.getElementById('time-elapsed').textContent = elapsedTime;
+        }
+        
+        setInterval(updateElapsedTime, 1000);
+        
         function updateTextK1() {
             let val = event.target.value;
             let name = event.target.name;
@@ -206,6 +228,7 @@
         }
 
         function updateTextK2() {
+
             let val = event.target.value;
             event.target.value = val.toUpperCase();
             let name = event.target.name;
@@ -256,21 +279,37 @@
         }
 
         window.onbeforeunload = function() {
-            localStorage.clear();
+            let username = document.getElementById('user').textContent;
+            let time = document.getElementById('time-elapsed').textContent
+            let cipherNumbers = document.getElementsByClassName('cipher-letter');
+            let itemString = 'time-'+username;
+            for (let i = 0; i<17; i++){
+                itemString+=cipherNumbers[i].innerText;
+            }
+            localStorage.removeItem(itemString);
 
             let cipherInputs = document.getElementsByClassName('cipher-input letter');
             for (let i = 0; i<cipherInputs.length; i++){
-                if (localStorage.getItem(cipherInputs[i].name) == null){
-                    localStorage.setItem(cipherInputs[i].name, cipherInputs[i].value);
-                }
+                //if (localStorage.getItem(cipherInputs[i].name) == null){
+                //    localStorage.setItem(cipherInputs[i].name, cipherInputs[i].value);
+                //}
             }
+
+            localStorage.setItem(itemString, time)
             
         }
 
         window.onload = function() {
             let popup = document.getElementById('checks')
             if (popup.innerText == 'Correct Solution!'){
-                localStorage.clear();
+                let username = document.getElementById('user').textContent;
+                let time = document.getElementById('time-elapsed').textContent
+                let cipherNumbers = document.getElementsByClassName('cipher-letter');
+                let itemString = 'time-'+username;
+                for (let i = 0; i<17; i++){
+                    itemString+=cipherNumbers[i].innerText;
+                }
+                localStorage.removeItem(itemString);
             }
 
             setTimeout(() => {
@@ -279,11 +318,11 @@
             }, 10000);
 
             let cipherInputs = document.getElementsByClassName('cipher-input letter');
-            for (let i = 0; i<cipherInputs.length; i++){
-                if (localStorage.getItem(cipherInputs[i].name) != null){
-                    cipherInputs[i].value = localStorage.getItem(cipherInputs[i].name);
-                }
-            }
+            //for (let i = 0; i<cipherInputs.length; i++){
+            //    if (localStorage.getItem(cipherInputs[i].name) != null){
+            //        cipherInputs[i].value = localStorage.getItem(cipherInputs[i].name);
+            //    }
+            //}
         }
 
 
@@ -297,7 +336,7 @@
                     <div id="title">
                         <button id="navbutton" onclick="location.href='/profile/{{profile['username']}}'">
                             <img id="avatar" src="/static/avatars/{{profile['avatar']}}">
-                            <span>{{profile['username']}}'s Profile</span>
+                            <span id="user">{{profile['username']}}'s Profile</span>
                         </button>
                     </div>
                 </li>
@@ -352,6 +391,7 @@
             </div>
 
             <div id="checkbutton">
+                <div>Time: <p id="time-elapsed">0</p></div>
                 <button type="submit">Check Solution</button>
             </div>
         </form>
