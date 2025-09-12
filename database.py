@@ -4,10 +4,11 @@ import uuid
 import json
 
 __db = None
+DATABASE = "user.db"
 
 #connects to database and creates account and profile tables
 def db_connect():
-    __db=sqlite3.connect("user.db")
+    __db=sqlite3.connect(DATABASE)
 
     __db.cursor().execute("""CREATE TABLE IF NOT EXISTS accounts (id INTEGER PRIMARY KEY, username TEXT NOT NULL, password TEXT NOT NULL, salt TEXT)""")
     __db.cursor().execute("""CREATE TABLE IF NOT EXISTS profiles (userid INTEGER PRIMARY KEY NOT NULL, wins INTEGER DEFAULT 0, losses INTEGER DEFAULT 0, times JSON, solvedCodes JSON, avatar TEXT)""")
@@ -17,7 +18,7 @@ def db_connect():
 #methods for creating new users
 
 def db_user_create(user:str,pword:str):
-    __db=sqlite3.connect("user.db")
+    __db=sqlite3.connect(DATABASE)
 
     #check if user exists
     response = __db.cursor().execute("""SELECT count(*) FROM accounts WHERE username = ?""", (user,)).fetchone()
@@ -46,7 +47,7 @@ def db_user_create(user:str,pword:str):
 
 #Authenticate username and pasword
 def db_auth_user(user:str,pword:str) -> bool:
-    __db = sqlite3.connect("user.db")
+    __db = sqlite3.connect(DATABASE)
     
     #check if user exists
     response = __db.cursor().execute("""SELECT count(*) FROM accounts WHERE username = ?""", (user,)).fetchone()
@@ -78,7 +79,7 @@ def db_auth_user(user:str,pword:str) -> bool:
 
 #Returns user profile
 def get_profile(user:str) -> dict:
-    __db = sqlite3.connect("user.db")
+    __db = sqlite3.connect(DATABASE)
 
     #check if user exists
     response = __db.cursor().execute("""SELECT count(*) FROM accounts WHERE username = ?""", (user,)).fetchone()
@@ -110,7 +111,7 @@ def get_profile(user:str) -> dict:
 
 #Updates and returns new user profile
 def update_profile(user:str, wins:int=None, losses:int=None, times:list=None, solvedCodes:list=None, avatar:str=None, password:str = None) -> dict:
-    __db = sqlite3.connect("user.db")
+    __db = sqlite3.connect(DATABASE)
 
     response = __db.cursor().execute("""SELECT id FROM accounts WHERE username = ?""", (user,)).fetchone()
     idValue=0
@@ -155,7 +156,7 @@ def update_profile(user:str, wins:int=None, losses:int=None, times:list=None, so
 
 #returns list of all account usernames in database
 def get_all_usernames() -> list:
-    __db = sqlite3.connect("user.db")
+    __db = sqlite3.connect(DATABASE)
     response = __db.cursor().execute("""SELECT username FROM accounts ORDER BY username""")
     usernames = []
     for x in response:
@@ -165,7 +166,7 @@ def get_all_usernames() -> list:
 
 #removes user from database
 def delete_user(user:str):
-    __db = sqlite3.connect('user.db')
+    __db = sqlite3.connect(DATABASE)
     
     response = __db.cursor().execute("""SELECT id FROM accounts WHERE username = ?""", (user,)).fetchone()
     idValue=0
@@ -177,7 +178,7 @@ def delete_user(user:str):
     __db.commit()
 
 def correctCodes(user:str, plaintext:str):
-    __db = sqlite3.connect('user.db')
+    __db = sqlite3.connect(DATABASE)
 
     response = __db.cursor().execute("""SELECT id FROM accounts WHERE username = ?""", (user,)).fetchone()
     idValue=0

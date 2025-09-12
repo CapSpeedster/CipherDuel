@@ -15,7 +15,8 @@ import codes
 # app.run(threaded=True)
 
 # Connect to Redis
-R_Server = redis.StrictRedis()
+REDIS_URL = os.environ.get("REDIS_URL")
+R_Server = redis.from_url(REDIS_URL)
 try:
     R_Server.ping()
 except:
