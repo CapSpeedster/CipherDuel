@@ -283,33 +283,34 @@
             let time = document.getElementById('time-elapsed').textContent
             let cipherNumbers = document.getElementsByClassName('cipher-letter');
             let itemString = 'time-'+username;
+            let addedString='';
             for (let i = 0; i<17; i++){
-                itemString+=cipherNumbers[i].innerText;
+                addedString+=cipherNumbers[i].innerText;
             }
-            localStorage.removeItem(itemString);
+            localStorage.removeItem(itemString+addedString);
 
             let cipherInputs = document.getElementsByClassName('cipher-input letter');
             for (let i = 0; i<cipherInputs.length; i++){
-                //if (localStorage.getItem(cipherInputs[i].name) == null){
-                //    localStorage.setItem(cipherInputs[i].name, cipherInputs[i].value);
-                //}
+                localStorage.setItem(cipherInputs[i].name+addedString, cipherInputs[i].value);
             }
 
-            localStorage.setItem(itemString, time)
+            localStorage.setItem(itemString+addedString, time)
             
         }
 
         window.onload = function() {
+            let username = document.getElementById('user').textContent;
+            let time = document.getElementById('time-elapsed').textContent
+            let cipherNumbers = document.getElementsByClassName('cipher-letter');
+            let itemString = 'time-'+username;
+            let addedString='';
+            for (let i = 0; i<17; i++){
+                addedString+=cipherNumbers[i].innerText;
+            }
+
             let popup = document.getElementById('checks')
             if (popup.innerText == 'Correct Solution!'){
-                let username = document.getElementById('user').textContent;
-                let time = document.getElementById('time-elapsed').textContent
-                let cipherNumbers = document.getElementsByClassName('cipher-letter');
-                let itemString = 'time-'+username;
-                for (let i = 0; i<17; i++){
-                    itemString+=cipherNumbers[i].innerText;
-                }
-                localStorage.removeItem(itemString);
+                localStorage.removeItem(itemString+addedString);
             }
 
             setTimeout(() => {
@@ -318,11 +319,9 @@
             }, 10000);
 
             let cipherInputs = document.getElementsByClassName('cipher-input letter');
-            //for (let i = 0; i<cipherInputs.length; i++){
-            //    if (localStorage.getItem(cipherInputs[i].name) != null){
-            //        cipherInputs[i].value = localStorage.getItem(cipherInputs[i].name);
-            //    }
-            //}
+            for (let i = 0; i<cipherInputs.length; i++){
+                cipherInputs[i].value = localStorage.getItem(cipherInputs[i].name+addedString);
+            }
         }
 
 

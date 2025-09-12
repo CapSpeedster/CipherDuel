@@ -236,14 +236,15 @@
             let cipherNumbers = document.getElementsByClassName('cipher-letter');
             let cipherInputs = document.getElementsByClassName('cipher-input letter');
             let itemString = 'time-'+username;
+            let addedString=''
             for (let i = 0; i<6; i++){
-                itemString+=cipherInputs[i].value;
-                itemString+=cipherNumbers[i].innerText;
+                addedString+=cipherInputs[i].value;
+                addedString+=cipherNumbers[i].innerText;
             }
             let currentTime = Date.now();
             let elapsedTime=0;
-            if (localStorage.getItem(itemString) != null){
-                elapsedTime = Math.floor((currentTime - startTime) / 1000) + parseInt(localStorage.getItem(itemString)); 
+            if (localStorage.getItem(itemString+addedString) != null){
+                elapsedTime = Math.floor((currentTime - startTime) / 1000) + parseInt(localStorage.getItem(itemString+addedString)); 
             }
             else {
                 elapsedTime = Math.floor((currentTime - startTime) / 1000); 
@@ -311,56 +312,81 @@
         }
 
         window.onbeforeunload = function() {
-            let cipherInputs = document.getElementsByClassName('cipher-input letter');
-            //for (let i = 6; i<cipherInputs.length; i++){
-            //    if (localStorage.getItem(cipherInputs[i].id) == null){
-            //        localStorage.setItem(cipherInputs[i].id, cipherInputs[i].value);
-            //    }
-            //}
-
-            let numberInputs = document.getElementsByClassName('cipher-input number');
-            //for (let i = 0; i<numberInputs.length; i++){
-            //    if (localStorage.getItem(numberInputs[i].id) == null){
-            //        localStorage.setItem(numberInputs[i].id, numberInputs[i].value);
-            //    }
-            //}
-
-            let polybiusInputs = document.getElementsByClassName('polybius-input letter');
-            //for (let i = 0; i<polybiusInputs.length; i++){
-            //    if (localStorage.getItem(polybiusInputs[i].name + 'poly') == null){
-            //        localStorage.setItem(polybiusInputs[i].name + 'poly', polybiusInputs[i].value);
-            //    }
-            //}
-
             let username = document.getElementById('user').textContent;
             let time = document.getElementById('time-elapsed').textContent
+            let cipherInputs = document.getElementsByClassName('cipher-input letter');
+            let numberInputs = document.getElementsByClassName('cipher-input number');
+            let polybiusInputs = document.getElementsByClassName('polybius-input letter');
             let cipherNumbers = document.getElementsByClassName('cipher-letter');
             let itemString = 'time-'+username;
+            let addedString = '';
             for (let i = 0; i<6; i++){
-                itemString+=cipherInputs[i].value;
-                itemString+=cipherNumbers[i].innerText;
+                addedString+=cipherInputs[i].value;
+                addedString+=cipherNumbers[i].innerText;
             }
 
-            localStorage.removeItem(itemString);
-            localStorage.setItem(itemString, time)
+            localStorage.removeItem(itemString+addedString);
+            for (let i = 6; i<cipherInputs.length; i++) {
+                localStorage.removeItem(cipherInputs[i].id+addedString);
+            }
+            for (let i = 0; i<numberInputs.length; i++){
+                localStorage.removeItem(numberInputs[i].id+addedString);
+            }
+            for (let i = 0; i<polybiusInputs.length; i++){
+                localStorage.removeItem(polybiusInputs[i].name + 'poly' + addedString);
+            }
+            
+            localStorage.setItem(itemString+addedString, time)
+
+            for (let i = 6; i<cipherInputs.length; i++){
+                if (cipherInputs[i].value != ''){
+                    localStorage.setItem(cipherInputs[i].id+addedString, cipherInputs[i].value);
+                }
+            }
+
+            
+            for (let i = 0; i<numberInputs.length; i++){
+                if (numberInputs[i].value != ''){
+                    localStorage.setItem(numberInputs[i].id+addedString, numberInputs[i].value);
+                }
+            }
+
+            
+            for (let i = 0; i<polybiusInputs.length; i++){
+                if (polybiusInputs[i].value != ''){
+                    localStorage.setItem(polybiusInputs[i].name + 'poly' + addedString, polybiusInputs[i].value);
+                }
+            }
         }
 
         
 
         window.onload = function() {
+            let username = document.getElementById('user').textContent;
+            let time = document.getElementById('time-elapsed').textContent
+            let cipherNumbers = document.getElementsByClassName('cipher-letter');
+            let cipherInputs = document.getElementsByClassName('cipher-input letter');
+            let polybiusInputs = document.getElementsByClassName('polybius-input letter');
+            let numberInputs = document.getElementsByClassName('cipher-input number');
+            let itemString = 'time-'+username;
+            let addedString = '';
+            for (let i = 0; i<6; i++){
+                addedString+=cipherInputs[i].value;
+                addedString+=cipherNumbers[i].innerText;
+            }
+
             let popup = document.getElementById('checks')
             if (popup.innerText == 'Correct Solution!'){
-                let username = document.getElementById('user').textContent;
-                let time = document.getElementById('time-elapsed').textContent
-                let cipherNumbers = document.getElementsByClassName('cipher-letter');
-                let cipherInputs = document.getElementsByClassName('cipher-input letter');
-                let itemString = 'time-'+username;
-                for (let i = 0; i<6; i++){
-                    itemString+=cipherInputs[i].value;
-                    itemString+=cipherNumbers[i].innerText;
+                localStorage.removeItem(itemString+addedString);
+                for (let i = 6; i<cipherInputs.length; i++) {
+                    localStorage.removeItem(cipherInputs[i].id+addedString);
                 }
-    
-                localStorage.removeItem(itemString);
+                for (let i = 0; i<numberInputs.length; i++){
+                    localStorage.removeItem(numberInputs[i].id+addedString);
+                }
+                for (let i = 0; i<polybiusInputs.length; i++){
+                    localStorage.removeItem(polybiusInputs[i].name + 'poly' + addedString);
+                }
             }
 
             setTimeout(() => {
@@ -368,26 +394,17 @@
                 checks.style.display = 'none';
             }, 10000);
 
-            let polybiusInputs = document.getElementsByClassName('polybius-input letter');
-            //for (let i = 0; i<polybiusInputs.length; i++){
-            //    if (localStorage.getItem(polybiusInputs[i].name + 'poly') != null){
-            //        polybiusInputs[i].value = localStorage.getItem(polybiusInputs[i].name + 'poly');
-            //    }
-            //}
+            for (let i = 0; i<polybiusInputs.length; i++){
+                polybiusInputs[i].value = localStorage.getItem(polybiusInputs[i].name + 'poly'+addedString);
+            }
 
-            let cipherInputs = document.getElementsByClassName('cipher-input letter');
-            //for (let i = 0; i<cipherInputs.length; i++){
-            //    if (localStorage.getItem(cipherInputs[i].id) != null){
-            //        cipherInputs[i].value = localStorage.getItem(cipherInputs[i].id);
-            //    }
-            //}
+            for (let i = 6; i<cipherInputs.length; i++){
+                cipherInputs[i].value = localStorage.getItem(cipherInputs[i].id+addedString);
+            }
 
-            let numberInputs = document.getElementsByClassName('cipher-input number');
-            //for (let i = 0; i<numberInputs.length; i++){
-            //    if (localStorage.getItem(numberInputs[i].id) != null){
-            //        numberInputs[i].value = localStorage.getItem(numberInputs[i].id);
-            //    }
-            //}
+            for (let i = 0; i<numberInputs.length; i++){
+                numberInputs[i].value = localStorage.getItem(numberInputs[i].id+addedString);
+            }
 
             updateNihilist();
         }
