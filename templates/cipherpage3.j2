@@ -1,0 +1,487 @@
+<html>
+<head>
+    <link rel="stylesheet" type="text/css" href="/static/cipher.css"/>
+    <style>
+        :root {
+            --color-bg: 240, 240, 245;
+            --color-fg: 255, 255, 255;
+            --color-selected: 100, 100, 100;
+            --color-mine: 126, 27, 27, 0.75;
+            --color-navbar: 41, 128, 185;
+        }
+        div#title {
+            position: relative;
+            font-size: 40px;
+            color: white;
+            padding-left: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        div#navbar {
+            width: 100%;
+            height: 150px;
+            border: none;
+            background-color: rgb(var(--color-navbar));
+            display: flex;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        ul#navlist {
+            list-style-type: none;
+            display: flex;
+            flex-direction: row;
+            gap: 20px;
+            padding: 20px;
+            align-items: center;
+            width: 100%;
+            margin: 0;
+        }
+
+        li#navbutton {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 0.5rem;
+            font-size: 1.5rem;
+            margin: 0.5rem;
+        }
+        button {
+            background-color: rgb(var(--color-navbar));
+            color: rgb(198, 209, 230);
+            cursor: pointer;
+        }
+
+        button:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+        img#avatar {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            overflow: hidden;
+            object-fit: cover;
+            border: 3px solid white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        
+        .cipher-container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .cipher-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+            gap: 20px;
+            justify-items: center;
+            max-width: 80%;
+            margin: 2rem auto;
+            padding: 2rem;
+            background-color: rgb(248, 250, 252);
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .cipher-pair {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .cipher-input {
+            width: 50px;
+            height: 35px;
+            text-align: center;
+            font-size: 1.2rem;
+            border: 2px solid rgb(41, 128, 185);
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .polybius-input {
+            width: 35px;
+            height: 35px;
+            text-align: center;
+            font-size: 1.2rem;
+            border: 2px solid rgb(41, 128, 185);
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .cipher-input:focus {
+            outline: none;
+            border-color: rgb(52, 152, 219);
+            box-shadow: 0 0 0 3px rgba(41, 128, 185, 0.2);
+        }
+
+        .polybius-input:focus {
+            outline: none;
+            border-color: rgb(52, 152, 219);
+            box-shadow: 0 0 0 3px rgba(41, 128, 185, 0.2);
+        }
+
+        .cipher-letter {
+            font-weight: bold;
+            font-size: 1.3rem;
+            color: rgb(41, 128, 185);
+        }
+
+        .polybius-letter {
+            font-weight: bold;
+            font-size: 1.3rem;
+            color: rgb(41, 128, 185);
+        }
+
+        #checkbutton {
+            margin: 2rem auto;
+            text-align: center;
+        }
+
+        #checkbutton button {
+            padding: 1rem 3rem;
+            font-size: 1.2rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            background-color: rgb(41, 128, 185);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(41, 128, 185, 0.2);
+        }
+
+        #checkbutton button:hover {
+            background-color: rgb(52, 152, 219);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(41, 128, 185, 0.3);
+        }
+
+        .lobby-code {
+            text-align: center;
+            font-size: 1.2rem;
+            color: rgb(75, 85, 99);
+            margin: 1rem 0;
+        }
+
+        .lobby-code strong {
+            color: rgb(41, 128, 185);
+            font-size: 1.4rem;
+        }
+
+        #checks {
+            text-align: center;
+            padding: 1rem;
+            margin: 1rem auto;
+            max-width: 600px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            font-size: 1.2rem;
+            color: rgb(41, 128, 185);
+        }
+
+        .frequency-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 1rem;
+            padding: 2rem;
+            margin: 2rem auto;
+            background-color: rgb(248, 250, 252);
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            max-width: 90%;
+        }
+
+        .freq-pair {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        .freq-info {
+            font-size: 1.1rem;
+            color: rgb(75, 85, 99);
+            min-width: 60px;
+        }
+        .grid-container {
+          display: grid;
+          grid-template-columns: repeat(5, 1fr); /* 5 columns */
+          gap: 10px; /* Space between inputs */
+          max-width: 300px; /* Optional: Adjust width */
+          margin: auto; /* Center the grid */
+        }
+
+        #table {
+            display:flex;
+        }
+    </style>
+    <script>
+        let startTime = Date.now();
+
+        function updateElapsedTime() {
+            let username = document.getElementById('user').textContent;
+            let cipherNumbers = document.getElementsByClassName('cipher-letter');
+            let cipherInputs = document.getElementsByClassName('cipher-input letter');
+            let itemString = 'time-'+username;
+            let addedString=''
+            for (let i = 0; i<6; i++){
+                addedString+=cipherInputs[i].value;
+                addedString+=cipherNumbers[i].innerText;
+            }
+            let currentTime = Date.now();
+            let elapsedTime=0;
+            if (localStorage.getItem(itemString+addedString) != null){
+                elapsedTime = Math.floor((currentTime - startTime) / 1000) + parseInt(localStorage.getItem(itemString+addedString)); 
+            }
+            else {
+                elapsedTime = Math.floor((currentTime - startTime) / 1000); 
+            }
+            document.getElementById('time-elapsed').textContent = elapsedTime;
+        }
+
+        setInterval(updateElapsedTime, 1000);
+
+        function updateNihilist() {
+            let cipherDiv = document.getElementsByClassName('cipher-letter');
+            let inputDiv = document.getElementsByClassName('cipher-input number');
+            let subtractedDiv = document.getElementsByClassName('subtracted-number');
+            let letterDiv = document.getElementsByClassName('cipher-input letter')
+            let subtractedNumber = '-';
+            let numVals = [11,12,13,14,15,21,22,23,24,25,31,32,33,34,35,41,42,43,44,45,51,52,53,54,55];
+            for (let i=0; i<inputDiv.length; i++){
+                if (inputDiv[i].value != '' && numVals.includes(parseInt(inputDiv[i].value))) {
+                    let fNum = parseInt(inputDiv[i].value);
+                    let sNum = parseInt(cipherDiv[i].innerText);
+                    tNum = (sNum-fNum).toString();
+                    subtractedDiv[i].innerText = tNum;
+                    letterDiv[i].name = tNum;
+                    updatePolybius(letterDiv[i]);
+                }
+                else{
+                    subtractedDiv[i].innerText='-';
+                    letterDiv[i].name = '-';
+                    updatePolybius(letterDiv[i]);
+                }
+            }
+        }
+
+        function updatePolybius(target){
+            let name = target.name;
+            let polyInput = document.querySelector('.polybius-input[name="' + name + '"]');
+            let val = '';
+            let numVals = [11,12,13,14,15,21,22,23,24,25,31,32,33,34,35,41,42,43,44,45,51,52,53,54,55];
+            if (polyInput != null){
+                if (polyInput.value != ''){
+                    val = polyInput.value.toUpperCase();
+                    if (!target.disabled){
+                        target.value = val.toUpperCase();
+                    }
+                }
+                else {
+                    val = target.value;
+                    target.value = val.toUpperCase();
+                }
+            }
+            else{
+                val = target.value;
+                target.value = val.toUpperCase(); 
+            }
+            if (name != '-' && numVals.includes(parseInt(name))) {
+                let subtractedDiv = document.getElementsByClassName('subtracted-number');
+                let sameBoxes = document.getElementsByName(name);
+                for (let i = 0; i<sameBoxes.length; i++){
+                    if (!sameBoxes[i].disabled){
+                        sameBoxes[i].value = val.toUpperCase();
+                    }
+                }
+            }
+
+        }
+
+        window.onbeforeunload = function() {
+            let username = document.getElementById('user').textContent;
+            let time = document.getElementById('time-elapsed').textContent
+            let cipherInputs = document.getElementsByClassName('cipher-input letter');
+            let numberInputs = document.getElementsByClassName('cipher-input number');
+            let polybiusInputs = document.getElementsByClassName('polybius-input letter');
+            let cipherNumbers = document.getElementsByClassName('cipher-letter');
+            let itemString = 'time-'+username;
+            let addedString = '';
+            for (let i = 0; i<6; i++){
+                addedString+=cipherInputs[i].value;
+                addedString+=cipherNumbers[i].innerText;
+            }
+
+            localStorage.removeItem(itemString+addedString);
+            for (let i = 6; i<cipherInputs.length; i++) {
+                localStorage.removeItem(cipherInputs[i].id+addedString);
+            }
+            for (let i = 0; i<numberInputs.length; i++){
+                localStorage.removeItem(numberInputs[i].id+addedString);
+            }
+            for (let i = 0; i<polybiusInputs.length; i++){
+                localStorage.removeItem(polybiusInputs[i].name + 'poly' + addedString);
+            }
+            
+            localStorage.setItem(itemString+addedString, time);
+            localStorage.setItem('previous-time-nihilist', time);
+
+            for (let i = 6; i<cipherInputs.length; i++){
+                if (cipherInputs[i].value != ''){
+                    localStorage.setItem(cipherInputs[i].id+addedString, cipherInputs[i].value);
+                }
+            }
+
+            
+            for (let i = 0; i<numberInputs.length; i++){
+                if (numberInputs[i].value != ''){
+                    localStorage.setItem(numberInputs[i].id+addedString, numberInputs[i].value);
+                }
+            }
+
+            
+            for (let i = 0; i<polybiusInputs.length; i++){
+                if (polybiusInputs[i].value != ''){
+                    localStorage.setItem(polybiusInputs[i].name + 'poly' + addedString, polybiusInputs[i].value);
+                }
+            }
+        }
+
+        
+
+        window.onload = function() {
+            let username = document.getElementById('user').textContent;
+            let time = document.getElementById('time-elapsed').textContent
+            let cipherNumbers = document.getElementsByClassName('cipher-letter');
+            let cipherInputs = document.getElementsByClassName('cipher-input letter');
+            let polybiusInputs = document.getElementsByClassName('polybius-input letter');
+            let numberInputs = document.getElementsByClassName('cipher-input number');
+            let itemString = 'time-'+username;
+            let addedString = '';
+            for (let i = 0; i<6; i++){
+                addedString+=cipherInputs[i].value;
+                addedString+=cipherNumbers[i].innerText;
+            }
+
+            let popup = document.getElementById('checks')
+            if (popup.innerText == 'Correct Solution!'){
+                localStorage.removeItem(itemString+addedString);
+                for (let i = 6; i<cipherInputs.length; i++) {
+                    localStorage.removeItem(cipherInputs[i].id+addedString);
+                }
+                for (let i = 0; i<numberInputs.length; i++){
+                    localStorage.removeItem(numberInputs[i].id+addedString);
+                }
+                for (let i = 0; i<polybiusInputs.length; i++){
+                    localStorage.removeItem(polybiusInputs[i].name + 'poly' + addedString);
+                }
+
+                localStorage.setItem('previous-time-nihilist', time);
+            }
+
+            setTimeout(() => {
+                const checks = document.getElementById('checks');
+                checks.style.display = 'none';
+            }, 10000);
+
+            for (let i = 0; i<polybiusInputs.length; i++){
+                polybiusInputs[i].value = localStorage.getItem(polybiusInputs[i].name + 'poly'+addedString);
+            }
+
+            for (let i = 6; i<cipherInputs.length; i++){
+                cipherInputs[i].value = localStorage.getItem(cipherInputs[i].id+addedString);
+            }
+
+            for (let i = 0; i<numberInputs.length; i++){
+                numberInputs[i].value = localStorage.getItem(numberInputs[i].id+addedString);
+            }
+
+            let prevtime = document.getElementById('prevtime');
+            prevtime.textContent = localStorage.getItem('previous-time-nihilist');
+
+            updateNihilist();
+        }
+
+
+        
+    </script>
+</head>
+<body>
+    <div id="navbar">
+            <ul id="navlist">
+                <li>
+                    <div id="title">
+                        <button id="navbutton" onclick="location.href='/profile/{{profile['username']}}'">
+                            <img id="avatar" src="/static/avatars/{{profile['avatar']}}">
+                            <span id="user">{{profile['username']}}'s Profile</span>
+                        </button>
+                    </div>
+                </li>
+                <li>
+                    <button id="navbutton" onclick="location.href='/cipherselection'">Ciphers</button>
+                </li>
+                <li><button onclick="location.href='/logout'">Log Out</button></li>
+            </ul>
+        </div>
+
+    <form id="code" action="{{ route }}" method="POST">
+        <div id="table">
+            <div id='grid' class="cipher-grid">
+                    {% for i in range(numLen) %}
+                        {% if i == ' ' %}
+                            <div style="width: 30px;"></div>
+                        {% else %}
+                            <div class="cipher-pair">
+                                <div class="cipher-letter">{{ numbers[i] }}</div>
+                                <input type="number" id="#{{i}}" class="cipher-input number" maxlength="2" oninput="updateNihilist()" />
+                                <div class="subtracted-number">-</div>
+                                {% if i < 6 %}
+                                    <input id="{{i}}" type="text" class="cipher-input letter" name="-" maxlength="1" value="{{hint[i]}}" disabled />
+                                {% else %}
+                                    <input id="{{i}}" type="text" class="cipher-input letter" name="-" maxlength="1" oninput="updatePolybius(this)" />
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+            </div>
+            <div class="grid-container">
+                {% for i in numVals %}
+                    <div id="polybius-table" class="cipher-pair">
+                        <div class="polybius-letter">{{ i }}</div>
+                        <input type="text" class="polybius-input letter" name="{{ i }}" maxlength="1" oninput="updatePolybius(this)"/>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div id="checkbutton">
+            <div>Time: <p id="time-elapsed">0</p></div>
+            <button type="submit">Check Solution</button>
+        </div>
+    </form>
+
+        <div id="checks">
+            {% with checks = get_flashed_messages(category_filter=["check"]) %}
+                {% if checks %}
+                    {% for msg in checks %}
+                        {{ msg }} <div>Your time is <span id="prevtime">0</span> seconds.</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+    </div>
+</body>
+</html>
