@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="static/style.css">
+    
+</head>
+<body>
+    <div id="navbar">
+        <ul id="navlist">
+            <li>
+                <div id="title">
+                    <button id="navbutton" onclick="location.href='/profile/{{profile['username']}}'">
+                        <img id="avatar" src="/static/avatars/{{profile['avatar']}}">
+                        <span>{{profile['username']}}'s Profile</span>
+                    </button>
+                </div>
+            </li>
+            <li>
+                <button id="navbutton" onclick="location.href='/cipherselection'">Ciphers</button>
+            </li>
+            <li><button onclick="location.href='/logout'">Log Out</button></li>
+        </ul>
+    </div>
+        <div class="lobby-header">
+            <h1>Cipher Selection</h1>
+        </div>
+        
+        <div class="lobby-section">
+            <h2>Choose Your Game Mode</h2>
+            <form id="cipherselect" action="/cipherselection" method="POST" style="background: none; box-shadow: none;">
+                <div style="display: grid; gap: 1rem; max-width: 600px; margin: 0 auto;">
+                    {#<button name="mode" value="patristocrat" class="cipher-btn">Multiplayer Patristocrat</button>#}
+                    <button name="mode" value="soloPat1" class="cipher-btn">K1 Patristocrat</button>
+                    <button name="mode" value="soloPat2" class="cipher-btn">K2 Patristocrat</button>
+                    <button name="mode" value="nihilist" class="cipher-btn">Nihilist Criptanalysis</button>
+                    <button name="mode" value="soloAri3" class="cipher-btn">K3 Aristocrat</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
