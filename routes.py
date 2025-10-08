@@ -657,7 +657,7 @@ def connect_routes(blueprint):
                     randint = random.randint(0, len(newCiphers)-1)
                     plaintext = newCiphers[randint]['plaintext']
                     keyword = newCiphers[randint]['keyword']
-                    shift = random.randint(0, 25)
+                    shift = random.randint(1, 25)
                     currentCode = dict(
                         {
                             'plaintext': plaintext,
@@ -1013,4 +1013,5 @@ def connect_routes(blueprint):
                 if isinstance(msg['data'], bytes):
                     yield f"data: {msg['data'].decode()}\n\n"
         return Response(event_stream(),
+
                         mimetype="text/event-stream")
