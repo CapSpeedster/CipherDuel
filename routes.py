@@ -12,11 +12,8 @@ import random
 import codes
 
 
-# app.run(threaded=True)
-
 # Connect to Redis
-REDIS_URL = os.environ.get("REDIS_URL")
-R_Server = redis.from_url(REDIS_URL)
+R_Server = redis.StrictRedis()
 try:
     R_Server.ping()
 except:
@@ -348,10 +345,6 @@ def connect_routes(blueprint):
         if userID == None:
             return redirect('/login')
         else:
-            userID = request.cookies.get('userid')
-        if userID == None:
-            return redirect('/login')
-        else:
             with open('static/ciphers.csv', mode='r') as file:
                 csv_reader = csv.DictReader(file)
                 ciphers = []
@@ -623,6 +616,100 @@ def connect_routes(blueprint):
             flash(f"Incorrect Solution. Please try again.", 'check')
 
         return redirect('/nihilist-criptanalysis-solo')
+    
+    @blueprint.route('/aristocrat-k3-solo')
+    def k3Aristo():
+        userID = request.cookies.get('userid')
+        if userID == None:
+            return redirect('/login')
+        else:
+            with open('static/ciphers.csv', mode='r') as file:
+                csv_reader = csv.DictReader(file)
+                ciphers = []
+                for i in csv_reader:
+                    ciphers.append(i)
+            
+            k3Ciphers = []
+            for i in range(len(ciphers)):
+                if ciphers[i]['cipherType']=='k3': #get chatgpt to make 50 more codes and label them k3
+                    k3Ciphers.append(ciphers[i])
+
+            solvedCodes = json.loads(R_Server.get(userID))['solvedCodes']
+            
+            newCiphers = []
+            for i in k3Ciphers:
+                if i['plaintext'] not in solvedCodes:
+                    newCiphers.append(i)
+            
+            if len(newCiphers) == 0:
+                return "You have completed all of our current ciphers. Wait for future updates to proceed." #Create j2 file with button to return to profile
+
+            else: 
+                keys=R_Server.get(userID+'ari3s')
+                if keys==None:
+                    randint = random.randint(0, len(newCiphers)-1)
+                    plaintext = newCiphers[randint]['plaintext']
+                    keyword = newCiphers[randint]['keyword']
+                    shift = random.randint(0, 25)
+                    currentCode = dict(
+                        {
+                            'plaintext': plaintext,
+                            'key': keyword, 
+                            'shift': shift
+                         })
+                    R_Server.set(userID+'ari3s', json.dumps(currentCode))
+                else:
+                    plaintext = json.loads(keys)['plaintext']
+                    keyword = json.loads(keys)['key']
+                    shift = json.loads(keys)['shift']
+                letters = list(codes.aristocratk3(plaintext, keyword, shift))
+                frequency = codes.get_frequency(codes.aristocratk3(plaintext, keyword, shift))
+                LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+                freqDict = dict()
+
+                for i in range(0, 26):
+                    freqDict[LETTERS[i]]=frequency[i]
+
+                return render_template('cipherpage4.j2', letters=letters, profile=json.loads(R_Server.get(userID)), route='/aristocrat-k3-solo', freqDict=freqDict) #Create j2 file for k3 aristos
+
+    @blueprint.route("/aristocrat-k3-solo", methods=['POST'])
+    def checkK3Aristo():
+        userID = request.cookies.get('userid')
+        username = json.loads(R_Server.get(userID))['username']
+        keys = json.loads(R_Server.get(userID+'ari3s'))
+        plainbet=codes.form_cipher(keys['key'], int(keys['shift']))
+        cipherbet=codes.form_cipher(keys['key'],0)
+        inputLetters = request.form
+        correct = True
+        incorrectLetters = []
+        incorStr = ''
+
+        for i in list(codes.text_clean(codes.aristocratk3(keys['plaintext'], keys['key'], keys['shift']))):
+            keyword = inputLetters['keyword']
+            if keyword.upper() == keys['key']:
+                break
+            else:
+                correct = False
+            
+            index=plainbet.index(i)
+            if  inputLetters.get(i)==cipherbet[index]:
+                continue
+            else:
+                if plainbet[index] not in incorrectLetters:
+                    incorrectLetters.append(plainbet[index])
+                
+        incorrectLetters.sort()
+        for i in incorrectLetters:
+            incorStr += i + ', '
+        
+        if correct:
+            flash('Correct Solution!', 'check')
+            R_Server.set(userID, json.dumps(database.correctCodes(username, keys['plaintext'])))
+            R_Server.delete(userID+'ari3s')
+        else:
+            flash(f"Incorrect Keyword. Please try again. The incorrect letters are {incorStr}", 'check')
+
+        return redirect('/aristocrat-k3-solo')
 
     @blueprint.route("/cipherselection")
     def gCode():
@@ -644,6 +731,8 @@ def connect_routes(blueprint):
             return redirect('/patristocrat-k2-solo')
         elif mode == 'nihilist':
             return redirect('/nihilist-criptanalysis-solo')
+        elif mode == 'soloAri3':
+            return redirect('/aristocrat-k3-solo')
         else:
             return 'ERROR: Incorrect Data'    
     
